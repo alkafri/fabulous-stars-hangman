@@ -49,6 +49,8 @@ public class GameController implements Initializable {
         //System.out.println("initialize method called");
 
         //gc = set the background color
+        //creating a rectangle covering 100% of the canvas makes it look like a background
+        //The color is able to change
         GraphicsContext gc = canvas.getGraphicsContext2D();
         gc.setFill(Color.BLUE);
         gc.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
@@ -70,15 +72,7 @@ public class GameController implements Initializable {
         * */
         if (i == 0) {
             Image image = new Image("https://d338t8kmirgyke.cloudfront.net/icons/icon_pngs/000/001/955/original/hangman.png");
-            gc.drawImage(image, 0, 0, canvas.getWidth()*0.3,canvas.getHeight()*0.4);
-        }
-        if (i ==1) {
-            Image image1 = new Image("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT32Mnn7xJ3xKP5we6o3QCQeDq6n03ZqEbcmQ&usqp=CAU");
-            gc.drawImage(image1, 0, 0, canvas.getWidth()*0.3,canvas.getHeight()*0.4);
-        }
-        if (i ==2) {
-            Image image2 = new Image("BlackBarTR.png");
-            gc.drawImage(image2, i, 0, canvas.getWidth()*0.3,canvas.getHeight()*0.45);
+            gc.drawImage(image, 0, 0, canvas.getWidth()*0.3,canvas.getHeight()*0.5);
         }
     }
 
@@ -94,16 +88,11 @@ public class GameController implements Initializable {
         * the amount can easily be changed, but I also don't think that
          */
         int counter = -1;
-        //int guesses = 0;
-
         int letterSize = 80;
         int rowOne = letterSize;
         int rowTwo = letterSize*2;
         int rowThree = letterSize*3;
         int rowFour = letterSize*4;
-
-
-
         //change the "A" to the players input
         for (int i = 0; i < guesses+1; i++) {
             int letterSpacing = counter*letterSize;
@@ -154,9 +143,12 @@ public class GameController implements Initializable {
     @FXML
     public void onCreateButtonClick(ActionEvent event) {
 
+        //move this to a new function that can determine if a guess is correct or wrong
         guesses++;
         System.out.println(guesses+"Guesses button");
         addLetter();
+        //^^^^^^^ to be moved to a better place
+
         var name = gameNameField.getText().strip();
         var playerName = playerNameField.getText().strip();
         var password = joinPasswordField.getText();
