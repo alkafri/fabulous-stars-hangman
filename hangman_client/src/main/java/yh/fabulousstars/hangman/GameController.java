@@ -8,8 +8,10 @@ import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
 import yh.fabulousstars.hangman.client.IGame;
 import yh.fabulousstars.hangman.client.IGameEvent;
 import yh.fabulousstars.hangman.client.events.GameStarted;
@@ -25,6 +27,7 @@ import java.util.ResourceBundle;
 public class GameController implements Initializable {
 
 
+    int guesses = 0;
 
     enum UISection {
         Create,
@@ -41,7 +44,7 @@ public class GameController implements Initializable {
     public TextArea logTextArea;
     //Canvas background
     @FXML
-    public void addRectangle() {
+    public void canvasBackground() {
         //sout is used to check if the method is initialized
         //System.out.println("initialize method called");
 
@@ -49,14 +52,85 @@ public class GameController implements Initializable {
         GraphicsContext gc = canvas.getGraphicsContext2D();
         gc.setFill(Color.BLUE);
         gc.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
+        hangmanFigure();
+        addLetter();
 
-        //temporary!!!
-        //Makes the 'Hangman'
-        gc.setStroke(Color.BLACK);
-        gc.moveTo(0,0);
-        gc.lineTo(canvas.getWidth()*0.5,0);
-        gc.stroke();
 
+
+    }
+    public void hangmanFigure() {
+        GraphicsContext gc = canvas.getGraphicsContext2D();
+        int i = 0;
+
+        /*NOTE to self
+        *Make own images
+        * 1 for each state the hangman can be in
+        * make them with transparent background
+        * experiment with what a good size is
+        * */
+        if (i == 0) {
+            Image image = new Image("https://d338t8kmirgyke.cloudfront.net/icons/icon_pngs/000/001/955/original/hangman.png");
+            gc.drawImage(image, 0, 0, canvas.getWidth()*0.3,canvas.getHeight()*0.4);
+        }
+        if (i ==1) {
+            Image image1 = new Image("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT32Mnn7xJ3xKP5we6o3QCQeDq6n03ZqEbcmQ&usqp=CAU");
+            gc.drawImage(image1, 0, 0, canvas.getWidth()*0.3,canvas.getHeight()*0.4);
+        }
+        if (i ==2) {
+            Image image2 = new Image("BlackBarTR.png");
+            gc.drawImage(image2, i, 0, canvas.getWidth()*0.3,canvas.getHeight()*0.45);
+        }
+    }
+
+    public void addLetter() {
+        /*
+        * if the guess is wrong make the letter appear in red
+        * place them to the right of the hangman
+        * have a method to check if letter is correct
+        * if wrong print it on the canvas
+        * Need to change a little for the final product
+        * fori loop is only for testing purposes
+        * IMPORTANT wrongGuess() currently only supports up to 20 guesses
+        * the amount can easily be changed, but I also don't think that
+         */
+        int counter = -1;
+        //int guesses = 0;
+
+        int letterSize = 80;
+        int rowOne = letterSize;
+        int rowTwo = letterSize*2;
+        int rowThree = letterSize*3;
+        int rowFour = letterSize*4;
+
+
+
+        //change the "A" to the players input
+        for (int i = 0; i < guesses+1; i++) {
+            int letterSpacing = counter*letterSize;
+
+            GraphicsContext gc = canvas.getGraphicsContext2D();
+
+            gc.setFill(Color.RED);
+            gc.setFont(new Font("Arial", letterSize));
+
+            if (i < 6 && i > 0) {
+                gc.fillText("A", 0+letterSpacing+ canvas.getWidth()*0.3, rowOne);
+            }
+            if (i < 11 && i > 5) {
+                gc.fillText("A", 0+letterSpacing+ canvas.getWidth()*0.3, rowTwo);
+            }
+            if (i < 16 && i > 10) {
+                gc.fillText("A", 0+letterSpacing+ canvas.getWidth()*0.3, rowThree);
+            }
+            if (i < 21 && i > 15) {
+                gc.fillText("A", 0+letterSpacing+ canvas.getWidth()*0.3, rowFour);
+            }
+
+            counter++;
+            if (counter > 4) {
+                counter = 0;
+            }
+        }
     }
     @FXML
     public Button createButton;
@@ -80,6 +154,9 @@ public class GameController implements Initializable {
     @FXML
     public void onCreateButtonClick(ActionEvent event) {
 
+        guesses++;
+        System.out.println(guesses+"Guesses button");
+        addLetter();
         var name = gameNameField.getText().strip();
         var playerName = playerNameField.getText().strip();
         var password = joinPasswordField.getText();
@@ -130,8 +207,8 @@ public class GameController implements Initializable {
 
         System.out.println("Initialized");
         //Keeps the canvas size updated
-        canvas.widthProperty().addListener((observable, oldValue, newValue) -> addRectangle());
-        canvas.heightProperty().addListener((observable, oldValue, newValue) -> addRectangle());
+        canvas.widthProperty().addListener((observable, oldValue, newValue) -> canvasBackground());
+        canvas.heightProperty().addListener((observable, oldValue, newValue) -> canvasBackground());
 
 
         GraphicsContext gc = canvas.getGraphicsContext2D();

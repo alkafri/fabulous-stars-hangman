@@ -13,7 +13,7 @@ public class CanvasClass extends Canvas {
     @Override
     public double minHeight(double width)
     {
-        return 64;
+        return 364;
     }
 
     @Override
