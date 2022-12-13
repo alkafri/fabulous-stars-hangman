@@ -1,7 +1,6 @@
-<%@ page import="com.google.cloud.datastore.Datastore" %>
-<%@ page import="com.google.cloud.datastore.DatastoreOptions" %>
-<%@ page import="com.google.cloud.datastore.Query" %>
 <%@ page import="yh.fabulousstars.server.models.*" %>
+<%@ page import="java.util.Iterator" %>
+<%@ page import="com.google.appengine.api.datastore.*" %>
 
 <!--
 Copyright 2019 Google LLC
@@ -32,16 +31,19 @@ limitations under the License.
 <h1>Fabulous Backend</h1>
 <h2>Running games:</h2>
 <%
-    var datastore = DatastoreOptions.getDefaultInstance().getService();
-    var query = Query.newEntityQueryBuilder()
-            .setKind("Game")
-                    .build();
-    var games = datastore.run(query);
+    DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+    Query query = new Query("Game");
+    query.addSort("expires");
+    Iterator<Entity> games = datastore.prepare(query).asIterator();
     while(games.hasNext()) {
-      var game = games.next();
+        Entity game = games.next();
 %>
-<p><%= game.getString("name") %></p>
-<% } %>
+<p><%
+        game.getProperty("name");
+%></p>
+<%
+    }
+%>
 
 </body>
 </html>

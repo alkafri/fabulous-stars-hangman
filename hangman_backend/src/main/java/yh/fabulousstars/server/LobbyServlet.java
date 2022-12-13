@@ -16,8 +16,8 @@
 
 package yh.fabulousstars.server;
 
-import com.google.cloud.datastore.Datastore;
-import com.google.cloud.datastore.DatastoreOptions;
+import com.google.appengine.api.datastore.DatastoreService;
+import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -35,7 +35,7 @@ import javax.servlet.http.HttpServletResponse;
 @SuppressWarnings("serial")
 @WebServlet(name = "LobbyServlet", value = "/lobby")
 public class LobbyServlet extends HttpServlet {
-    private Datastore datastore;
+    private DatastoreService datastore;
     private Gson gson;
 
   // Process the HTTP POST of the form
@@ -48,12 +48,13 @@ public class LobbyServlet extends HttpServlet {
       out.println("getServletPath: "+ req.getServletPath());
       out.println("getPathInfo: "+ req.getPathInfo());
       out.println("getQueryString: "+ req.getQueryString());
+      out.println("DatastoreService: "+ datastore.toString());
   }
 
     @Override
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
-        datastore = DatastoreOptions.getDefaultInstance().getService();
+        datastore = DatastoreServiceFactory.getDatastoreService();
         gson = new GsonBuilder().create();
     }
 }
