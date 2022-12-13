@@ -1,13 +1,13 @@
 package yh.fabulousstars.server.models;
 
 public class Game {
-    private String name;
+    public String gameId;
+    public String owner;
+    public String name;
 
     public Game() {
-        name = "";
-    }
-
-    public String getName() {
-        return name;
+        gameId = null;
+        owner = null;
+        name = null;
     }
 }

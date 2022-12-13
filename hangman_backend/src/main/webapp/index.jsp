@@ -24,7 +24,7 @@ limitations under the License.
 <html>
 <head>
   <link href='//fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
-  <title>Guestbook - Google App Engine Standard</title>
+  <title>Fabulous Backend</title>
 </head>
 <body>
 
