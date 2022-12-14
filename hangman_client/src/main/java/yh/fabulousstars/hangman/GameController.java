@@ -62,7 +62,8 @@ public class GameController implements Initializable {
     }
     public void hangmanFigure() {
         GraphicsContext gc = canvas.getGraphicsContext2D();
-        int i = 0;
+        // i = the amount of wrong guesses
+        int i = guesses;
 
         /*NOTE to self
         *Make own images
@@ -70,10 +71,61 @@ public class GameController implements Initializable {
         * make them with transparent background
         * experiment with what a good size is
         * */
-        if (i == 0) {
-            Image image = new Image("https://d338t8kmirgyke.cloudfront.net/icons/icon_pngs/000/001/955/original/hangman.png");
+
+        if (i == 1) {
+            Image image = new Image("C:\\Dev\\Projekt\\fabulous-stars-hangman\\hangman_client\\src\\main\\resources\\HangmanStateTransparentIMG\\HangmanTranState1.png");
+            gc.drawImage(image, 0, 0, canvas.getWidth()*0.3,canvas.getHeight()*0.5 );
+        }
+        if (i == 2) {
+            Image image = new Image("C:\\Dev\\Projekt\\fabulous-stars-hangman\\hangman_client\\src\\main\\resources\\HangmanStateTransparentIMG\\HangmanTranState2.png");
             gc.drawImage(image, 0, 0, canvas.getWidth()*0.3,canvas.getHeight()*0.5);
         }
+        if (i == 3) {
+            Image image = new Image("C:\\Dev\\Projekt\\fabulous-stars-hangman\\hangman_client\\src\\main\\resources\\HangmanStateTransparentIMG\\HangmanTranState3.png");
+            gc.drawImage(image, 0, 0, canvas.getWidth()*0.3,canvas.getHeight()*0.5);
+        }
+        if (i == 4) {
+            Image image = new Image("C:\\Dev\\Projekt\\fabulous-stars-hangman\\hangman_client\\src\\main\\resources\\HangmanStateTransparentIMG\\HangmanTranState4.png");
+            gc.drawImage(image, 0, 0, canvas.getWidth()*0.3,canvas.getHeight()*0.5);
+        }
+        if (i == 5) {
+            Image image = new Image("C:\\Dev\\Projekt\\fabulous-stars-hangman\\hangman_client\\src\\main\\resources\\HangmanStateTransparentIMG\\HangmanTranState5.png");
+            gc.drawImage(image, 0, 0, canvas.getWidth()*0.3,canvas.getHeight()*0.5);
+        }
+        if (i == 6) {
+            Image image = new Image("C:\\Dev\\Projekt\\fabulous-stars-hangman\\hangman_client\\src\\main\\resources\\HangmanStateTransparentIMG\\HangmanTranState6.png");
+            gc.drawImage(image, 0, 0, canvas.getWidth()*0.3,canvas.getHeight()*0.5);
+        }
+        if (i == 7) {
+            Image image = new Image("C:\\Dev\\Projekt\\fabulous-stars-hangman\\hangman_client\\src\\main\\resources\\HangmanStateTransparentIMG\\HangmanTranState7.png");
+            gc.drawImage(image, 0, 0, canvas.getWidth()*0.3,canvas.getHeight()*0.5);
+        }
+        if (i == 8) {
+            Image image = new Image("C:\\Dev\\Projekt\\fabulous-stars-hangman\\hangman_client\\src\\main\\resources\\HangmanStateTransparentIMG\\HangmanTranState8.png");
+            gc.drawImage(image, 0, 0, canvas.getWidth()*0.3,canvas.getHeight()*0.5);
+        }
+        if (i == 9) {
+            Image image = new Image("C:\\Dev\\Projekt\\fabulous-stars-hangman\\hangman_client\\src\\main\\resources\\HangmanStateTransparentIMG\\HangmanTranState9.png");
+            gc.drawImage(image, 0, 0, canvas.getWidth()*0.3,canvas.getHeight()*0.5);
+        }
+        if (i == 10) {
+            Image image = new Image("C:\\Dev\\Projekt\\fabulous-stars-hangman\\hangman_client\\src\\main\\resources\\HangmanStateTransparentIMG\\HangmanTranState10.png");
+            gc.drawImage(image, 0, 0, canvas.getWidth()*0.3,canvas.getHeight()*0.5);
+        }
+        if (i >= 11) {
+            Image image = new Image("C:\\Dev\\Projekt\\fabulous-stars-hangman\\hangman_client\\src\\main\\resources\\HangmanStateTransparentIMG\\HangmanTranState11.png");
+            gc.drawImage(image, 0, 0, canvas.getWidth()*0.3,canvas.getHeight()*0.5);
+        }
+
+
+        /*
+        if (i == 1) {
+            gc.setStroke(Color.BLACK);
+            gc.setLineWidth(5);
+            gc.strokeLine(50,150,100,150);
+        }
+
+         */
     }
 
     public void addLetter() {
@@ -147,6 +199,7 @@ public class GameController implements Initializable {
         guesses++;
         System.out.println(guesses+"Guesses button");
         addLetter();
+        hangmanFigure();
         //^^^^^^^ to be moved to a better place
 
         var name = gameNameField.getText().strip();
