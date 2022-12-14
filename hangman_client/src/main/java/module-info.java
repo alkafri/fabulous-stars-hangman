@@ -7,4 +7,5 @@ module yh.fabulousstars.hangman {
 
     opens yh.fabulousstars.hangman to javafx.fxml;
     exports yh.fabulousstars.hangman;
+    exports yh.fabulousstars.hangman.gui;
 }

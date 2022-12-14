@@ -1,8 +1,12 @@
 package yh.fabulousstars.hangman;
 
 import javafx.application.Application;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
@@ -13,7 +17,8 @@ public class GameApplication extends Application {
     public void start(Stage stage) throws IOException {
         FXMLLoader fxmlLoader = new FXMLLoader(GameApplication.class.getResource("main-view.fxml"));
         Scene scene = new Scene(fxmlLoader.load(), Color.GRAY);
-        stage.setTitle("Hello!");
+        Canvas canvas = new Canvas();
+        stage.setTitle("Hangman!");
         stage.setScene(scene);
         stage.show();
 
