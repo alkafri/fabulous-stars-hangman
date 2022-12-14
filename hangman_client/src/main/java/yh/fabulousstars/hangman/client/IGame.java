@@ -1,7 +1,5 @@
 package yh.fabulousstars.hangman.client;
 
-import yh.fabulousstars.hangman.localclient.LocalPlayer;
-
 import java.util.List;
 
 public interface IGame {

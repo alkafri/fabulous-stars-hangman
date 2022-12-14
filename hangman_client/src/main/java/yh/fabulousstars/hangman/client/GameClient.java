@@ -1,34 +1,41 @@
-package yh.fabulousstars.hangman.localclient;
+package yh.fabulousstars.hangman.client;
 
-import yh.fabulousstars.hangman.client.IGame;
-import yh.fabulousstars.hangman.client.IGameEvent;
-import yh.fabulousstars.hangman.client.IGameEventHandler;
-import yh.fabulousstars.hangman.client.IGameManager;
 import yh.fabulousstars.hangman.client.events.CreateFailed;
 import yh.fabulousstars.hangman.client.events.GameCreated;
-import yh.fabulousstars.hangman.client.events.GameDeleted;
 
+import java.net.CookieManager;
+import java.net.http.HttpClient;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GameManager implements IGameManager {
+public class GameClient implements IGameManager {
     private final ArrayList<LocalGame> games;
+    private final String backendUrl;
     private IGameEventHandler handler;
     private String clientId;
+    private HttpClient http;
 
-    public GameManager(IGameEventHandler handler) {
+
+    public GameClient(String backendUrl, IGameEventHandler handler) {
+        this.backendUrl = backendUrl;
         this.games = new ArrayList<>();
         this.handler = handler;
-        clientId = "dummy";
+        this.clientId = null;
+        this.http = HttpClient.newBuilder()
+                .cookieHandler(new CookieManager())
+                .followRedirects(HttpClient.Redirect.NORMAL)
+                .build();
     }
 
     @Override
-    public List<IGame> getGames() {
-        return new ArrayList<>(games);
+    public void getGames() {
+
+
     }
 
     @Override
     public void createGame(String name, String playerName, String password) {
+
         for (var game : games) {
             if(game.getName().equals(name)) {
                 sendEvent(new CreateFailed());

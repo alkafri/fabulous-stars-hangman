@@ -1,8 +1,4 @@
-package yh.fabulousstars.hangman.localclient;
-
-import yh.fabulousstars.hangman.client.IGame;
-import yh.fabulousstars.hangman.client.IPlayer;
-import yh.fabulousstars.hangman.client.PlayerState;
+package yh.fabulousstars.hangman.client;
 
 public class LocalPlayer implements IPlayer {
     private final String clientId;

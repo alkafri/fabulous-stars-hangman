@@ -11,12 +11,14 @@ import yh.fabulousstars.hangman.client.events.GameStarted;
 import yh.fabulousstars.hangman.client.events.PlayerDamage;
 import yh.fabulousstars.hangman.client.events.PlayerJoined;
 import yh.fabulousstars.hangman.client.events.SubmitWord;
-import yh.fabulousstars.hangman.localclient.GameManager;
+import yh.fabulousstars.hangman.client.GameClient;
 
 import java.net.URL;
 import java.util.ResourceBundle;
 
 public class GameController implements Initializable {
+
+    private static final String BACKEND_URL = "http://localhost:8080";
 
     enum UISection {
         Create,
@@ -37,7 +39,7 @@ public class GameController implements Initializable {
     public ListView<IGame> gameListView;
     @FXML
     public Button joinButton;
-    private GameManager gameManager;
+    private GameClient gameClient;
     private ObservableList<IGame> gameList;
 
     /**
@@ -52,7 +54,7 @@ public class GameController implements Initializable {
         var password = joinPasswordField.getText();
         if(!(name.isEmpty() || playerName.isEmpty())) {
             setUIState(false, UISection.Create, UISection.Join);
-            gameManager.createGame(name, playerName, password);
+            gameClient.createGame(name, playerName, password);
         } else {
             //TODO: Show error
         }
@@ -96,7 +98,7 @@ public class GameController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
 
         setUIState(false, UISection.Join);
-        gameManager = new GameManager(this::handleGameEvent);
+        gameClient = new GameClient(BACKEND_URL, this::handleGameEvent);
     }
 
     private void handleGameEvent(IGameEvent event) {

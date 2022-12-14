@@ -8,7 +8,7 @@ public interface IGameManager {
      * Get list of games.
      * @return List of games.
      */
-    List<IGame> getGames();
+    void listGames();
 
     /**
      * Create a new game.
@@ -24,4 +24,8 @@ public interface IGameManager {
      * @return is
      */
     String getClientId();
+
+    void connect(String password);
+
+    void join(String gameId);
 }

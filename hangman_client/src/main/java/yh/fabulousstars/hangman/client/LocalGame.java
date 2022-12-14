@@ -1,9 +1,5 @@
-package yh.fabulousstars.hangman.localclient;
+package yh.fabulousstars.hangman.client;
 
-import yh.fabulousstars.hangman.client.IGame;
-import yh.fabulousstars.hangman.client.IGameManager;
-import yh.fabulousstars.hangman.client.IPlayer;
-import yh.fabulousstars.hangman.client.PlayerState;
 import yh.fabulousstars.hangman.client.events.FailedToJoin;
 import yh.fabulousstars.hangman.client.events.PlayerJoined;
 
@@ -13,14 +9,14 @@ import java.util.List;
 public class LocalGame implements IGame {
     private static long gameIdCounter = 100;
     private final long id;
-    private GameManager manager;
+    private GameClient manager;
     private String theme;
     private String name;
     private String password;
     private List<LocalPlayer> players;
     private IPlayer me;
 
-    LocalGame(GameManager manager, String gameName, String playerName, String clientId, String password) {
+    LocalGame(GameClient manager, String gameName, String playerName, String clientId, String password) {
         this.id = gameIdCounter++;
         this.manager = manager;
         this.name = gameName;
@@ -66,9 +62,9 @@ public class LocalGame implements IGame {
         if(this.password.equals(password) && player.getGame().equals(this)) {
             players.add((LocalPlayer)player);
             manager.sendEvent(new PlayerJoined(this, player));
-            ((GameManager)getManager()).sendEvent(new PlayerJoined(this, player));
+            ((GameClient)getManager()).sendEvent(new PlayerJoined(this, player));
         } else {
-            ((GameManager) getManager()).sendEvent(new FailedToJoin(this));
+            ((GameClient) getManager()).sendEvent(new FailedToJoin(this));
         }
     }
 
