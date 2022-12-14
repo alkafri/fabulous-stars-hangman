@@ -18,7 +18,7 @@ public class GameApplication extends Application {
         FXMLLoader fxmlLoader = new FXMLLoader(GameApplication.class.getResource("main-view.fxml"));
         Scene scene = new Scene(fxmlLoader.load(), Color.GRAY);
         Canvas canvas = new Canvas();
-        stage.setTitle("Hello!");
+        stage.setTitle("Hangman!");
         stage.setScene(scene);
         stage.show();
     }
