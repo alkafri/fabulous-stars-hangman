@@ -86,7 +86,6 @@ public class GameController implements Initializable {
         Image image = new Image("BlackBarTR.png");
         gc.drawImage(image,barSize*i*1.5, canvas.getHeight()*0.8,barSize,canvas.getHeight()*0.01);
         }
-        System.out.println(canvas.getHeight()*0.01);
     }
     public void hangmanFigure() {
         GraphicsContext gc = canvas.getGraphicsContext2D();
@@ -101,47 +100,47 @@ public class GameController implements Initializable {
         * */
 
         if (i == 1) {
-            Image image = new Image("C:\\Dev\\Projekt\\fabulous-stars-hangman\\hangman_client\\src\\main\\resources\\HangmanStateTransparentIMG\\HangmanTranState1.png");
+            Image image = new Image("HangmanTranState1.png");
             gc.drawImage(image, 0, 0, canvas.getWidth()*0.3,canvas.getHeight()*0.5 );
         }
         if (i == 2) {
-            Image image = new Image("C:\\Dev\\Projekt\\fabulous-stars-hangman\\hangman_client\\src\\main\\resources\\HangmanStateTransparentIMG\\HangmanTranState2.png");
+            Image image = new Image("HangmanTranState2.png");
             gc.drawImage(image, 0, 0, canvas.getWidth()*0.3,canvas.getHeight()*0.5);
         }
         if (i == 3) {
-            Image image = new Image("C:\\Dev\\Projekt\\fabulous-stars-hangman\\hangman_client\\src\\main\\resources\\HangmanStateTransparentIMG\\HangmanTranState3.png");
+            Image image = new Image("HangmanTranState3.png");
             gc.drawImage(image, 0, 0, canvas.getWidth()*0.3,canvas.getHeight()*0.5);
         }
         if (i == 4) {
-            Image image = new Image("C:\\Dev\\Projekt\\fabulous-stars-hangman\\hangman_client\\src\\main\\resources\\HangmanStateTransparentIMG\\HangmanTranState4.png");
+            Image image = new Image("HangmanTranState4.png");
             gc.drawImage(image, 0, 0, canvas.getWidth()*0.3,canvas.getHeight()*0.5);
         }
         if (i == 5) {
-            Image image = new Image("C:\\Dev\\Projekt\\fabulous-stars-hangman\\hangman_client\\src\\main\\resources\\HangmanStateTransparentIMG\\HangmanTranState5.png");
+            Image image = new Image("HangmanTranState5.png");
             gc.drawImage(image, 0, 0, canvas.getWidth()*0.3,canvas.getHeight()*0.5);
         }
         if (i == 6) {
-            Image image = new Image("C:\\Dev\\Projekt\\fabulous-stars-hangman\\hangman_client\\src\\main\\resources\\HangmanStateTransparentIMG\\HangmanTranState6.png");
+            Image image = new Image("HangmanTranState6.png");
             gc.drawImage(image, 0, 0, canvas.getWidth()*0.3,canvas.getHeight()*0.5);
         }
         if (i == 7) {
-            Image image = new Image("C:\\Dev\\Projekt\\fabulous-stars-hangman\\hangman_client\\src\\main\\resources\\HangmanStateTransparentIMG\\HangmanTranState7.png");
+            Image image = new Image("HangmanTranState7.png");
             gc.drawImage(image, 0, 0, canvas.getWidth()*0.3,canvas.getHeight()*0.5);
         }
         if (i == 8) {
-            Image image = new Image("C:\\Dev\\Projekt\\fabulous-stars-hangman\\hangman_client\\src\\main\\resources\\HangmanStateTransparentIMG\\HangmanTranState8.png");
+            Image image = new Image("HangmanTranState8.png");
             gc.drawImage(image, 0, 0, canvas.getWidth()*0.3,canvas.getHeight()*0.5);
         }
         if (i == 9) {
-            Image image = new Image("C:\\Dev\\Projekt\\fabulous-stars-hangman\\hangman_client\\src\\main\\resources\\HangmanStateTransparentIMG\\HangmanTranState9.png");
+            Image image = new Image("HangmanTranState9.png");
             gc.drawImage(image, 0, 0, canvas.getWidth()*0.3,canvas.getHeight()*0.5);
         }
         if (i == 10) {
-            Image image = new Image("C:\\Dev\\Projekt\\fabulous-stars-hangman\\hangman_client\\src\\main\\resources\\HangmanStateTransparentIMG\\HangmanTranState10.png");
+            Image image = new Image("HangmanTranState10.png");
             gc.drawImage(image, 0, 0, canvas.getWidth()*0.3,canvas.getHeight()*0.5);
         }
         if (i >= 11) {
-            Image image = new Image("C:\\Dev\\Projekt\\fabulous-stars-hangman\\hangman_client\\src\\main\\resources\\HangmanStateTransparentIMG\\HangmanTranState11.png");
+            Image image = new Image("HangmanTranState11.png");
             gc.drawImage(image, 0, 0, canvas.getWidth()*0.3,canvas.getHeight()*0.5);
         }
 
