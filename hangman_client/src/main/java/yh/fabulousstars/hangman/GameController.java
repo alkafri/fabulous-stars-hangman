@@ -23,11 +23,13 @@ import yh.fabulousstars.hangman.localclient.GameManager;
 
 import java.net.URL;
 import java.util.ResourceBundle;
+import java.util.Scanner;
 
 public class GameController implements Initializable {
 
 
     int guesses = 0;
+    int correctGuess = 0;
 
     enum UISection {
         Create,
@@ -56,19 +58,22 @@ public class GameController implements Initializable {
         gc.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
 
 
-
+        //Prints the black bar
         blackBarForLetter();
+        //Draws the hangman
         hangmanFigure();
+        //draws the wrongly guessed letters
         addWrongLetter();
-
-
-
+        //draws the correctly guessed word
+        addCorrectLetter();
     }
     public void blackBarForLetter() {
         //Temporary until the proper word count can be used
         int wordCount = 7;
         int maxBarSize = 60;
-        int barSize = (int) (canvas.getWidth()*0.01* canvas.getHeight()*0.02);
+        int barWidth = (int) (canvas.getWidth()*0.01);
+        int barHeight = (int) (canvas.getHeight()*0.02);
+        int barSize = barWidth*barHeight;
 
         if (barSize > maxBarSize) {
             barSize = maxBarSize;
@@ -81,6 +86,7 @@ public class GameController implements Initializable {
         Image image = new Image("BlackBarTR.png");
         gc.drawImage(image,barSize*i*1.5, canvas.getHeight()*0.8,barSize,canvas.getHeight()*0.01);
         }
+        System.out.println(canvas.getHeight()*0.01);
     }
     public void hangmanFigure() {
         GraphicsContext gc = canvas.getGraphicsContext2D();
@@ -152,6 +158,7 @@ public class GameController implements Initializable {
         * IMPORTANT wrongGuess() currently only supports up to 20 guesses
         * the amount can easily be changed, but I also don't think that
          */
+        Scanner scanner = new Scanner(System.in);
         int counter = -1;
         int maxLetterSize = 80;
         int letterSize = (int) (canvas.getWidth()*0.01* canvas.getHeight()*0.02);
@@ -177,13 +184,13 @@ public class GameController implements Initializable {
                 gc.fillText("A", 0+letterSpacing+ canvas.getWidth()*0.3, rowOne);
             }
             if (i < 11 && i > 5) {
-                gc.fillText("A", 0+letterSpacing+ canvas.getWidth()*0.3, rowTwo);
+                gc.fillText("B", 0+letterSpacing+ canvas.getWidth()*0.3, rowTwo);
             }
             if (i < 16 && i > 10) {
-                gc.fillText("A", 0+letterSpacing+ canvas.getWidth()*0.3, rowThree);
+                gc.fillText("C", 0+letterSpacing+ canvas.getWidth()*0.3, rowThree);
             }
             if (i < 21 && i > 15) {
-                gc.fillText("A", 0+letterSpacing+ canvas.getWidth()*0.3, rowFour);
+                gc.fillText("D", 0+letterSpacing+ canvas.getWidth()*0.3, rowFour);
             }
 
             counter++;
@@ -191,6 +198,39 @@ public class GameController implements Initializable {
                 counter = 0;
             }
         }
+    }
+    public void addCorrectLetter() {
+        //Temporary until the proper word count can be used
+        int wordCount = 7;
+        int maxBarSize = 60;
+        int barWidth = (int) (canvas.getWidth()*0.01);
+        int barHeight = (int) (canvas.getHeight()*0.02);
+        int barSize = barWidth*barHeight;
+
+        if (barSize > maxBarSize) {
+            barSize = maxBarSize;
+        }
+        int maxLetterSize = 80;
+        int letterSize = (int) (canvas.getWidth()*0.01* canvas.getHeight()*0.02);
+
+        if (letterSize > maxLetterSize) {
+            letterSize = maxLetterSize;
+        }
+        GraphicsContext gc = canvas.getGraphicsContext2D();
+        gc.setFill(Color.GREEN);
+        gc.setFont(new Font("Arial", letterSize));
+
+        //Prints the image same amount of times as a word has letters
+        for (int i = 0; correctGuess > i; i++) {
+
+            if (correctGuess <= wordCount ) {
+                gc.fillText("E",barSize*i*1.5, canvas.getHeight()*0.8,barSize);
+            }
+        }
+        if (correctGuess == wordCount){
+            System.out.println("YOU WIN");
+        }
+
     }
     @FXML
     public Button createButton;
@@ -217,7 +257,10 @@ public class GameController implements Initializable {
         //move this to a new function that can determine if a guess is correct or wrong
         guesses++;
         System.out.println(guesses+"Guesses button");
+        correctGuess++;
+        System.out.println(correctGuess+"Correct guess button");
         addWrongLetter();
+        addCorrectLetter();
         hangmanFigure();
         //^^^^^^^ to be moved to a better place
 
