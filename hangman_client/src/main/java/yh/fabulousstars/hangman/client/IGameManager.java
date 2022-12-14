@@ -1,7 +1,5 @@
 package yh.fabulousstars.hangman.client;
 
-import java.util.List;
-
 public interface IGameManager {
 
     /**
@@ -20,12 +18,10 @@ public interface IGameManager {
     void createGame(String name, String playerName, String password);
 
     /**
-     * Get this clients unique session id.
+     * Get this client player.
      * @return is
      */
-    String getClientId();
+    IPlayer getClient();
 
-    void connect(String password);
-
-    void join(String gameId);
+    void connect(String name, String password);
 }

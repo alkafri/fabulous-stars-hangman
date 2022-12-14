@@ -66,7 +66,7 @@ public class GameController implements Initializable {
      * @param sections Sections
      */
     private void setUIState(boolean enabled, UISection... sections) {
-        for(var section : sections){
+        for(var section : sections) {
             if(section.equals(UISection.Create)) {
                 gameNameField.setDisable(!enabled);
                 playerNameField.setDisable(!enabled);

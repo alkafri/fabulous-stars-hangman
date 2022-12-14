@@ -1,17 +1,19 @@
 package yh.fabulousstars.hangman.client;
 
-public class LocalPlayer implements IPlayer {
+class LocalPlayer implements IPlayer {
     private final String clientId;
-    private final LocalGame game;
     private final String name;
+
+    private LocalGame game;
     private PlayerState state;
     private int damage;
 
-    LocalPlayer(LocalGame game, String name, String clientId) {
+
+    LocalPlayer(String name, String clientId) {
         this.clientId = clientId;
-        this.game = game;
+        this.game = null;
         this.name = name;
-        this.state = PlayerState.Initial;
+        this.state = PlayerState.WaitForStart;
         this.damage = 0;
     }
 
@@ -38,5 +40,12 @@ public class LocalPlayer implements IPlayer {
     @Override
     public int getDamage() {
         return damage;
+    }
+
+    @Override
+    public void submit(String value) {
+        if(game != null) {
+            game.getClient().submit(clientId, value);
+        }
     }
 }

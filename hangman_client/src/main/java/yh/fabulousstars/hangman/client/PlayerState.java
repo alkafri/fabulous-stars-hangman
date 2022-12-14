@@ -1,8 +1,10 @@
 package yh.fabulousstars.hangman.client;
 
 public enum PlayerState {
-    Initial,
-    Waiting,
-    Playing,
-    Hanged
+    WaitForStart,
+    SubmitWord,
+    WaitForTurn,
+    SubmitGuess,
+    Dead,
+    Winner
 }

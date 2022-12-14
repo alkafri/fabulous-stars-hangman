@@ -1,17 +1,25 @@
 package yh.fabulousstars.hangman.client.events;
 
-import yh.fabulousstars.hangman.client.IGame;
-import yh.fabulousstars.hangman.client.IPlayer;
-
 public class PlayerJoined extends AbstractEvent {
-    private final IPlayer player;
-    /**
-     * Constructor
-     *
-     * @param game Game instance
-     */
-    public PlayerJoined(IGame game, IPlayer player) {
-        super(game);
-        this.player = player;
+    private final String clientId;
+    private final String name;
+    private final String gameId;
+
+    public PlayerJoined(String clientId, String name, String gameId) {
+        this.clientId = clientId;
+        this.name = name;
+        this.gameId = gameId;
+    }
+
+    public String getClientId() {
+        return clientId;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getGameId() {
+        return gameId;
     }
 }

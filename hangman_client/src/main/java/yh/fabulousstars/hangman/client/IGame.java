@@ -6,9 +6,10 @@ public interface IGame {
 
     /**
      * Get game id.
+     *
      * @return Game id
      */
-    long getId();
+    String getId();
 
     /**
      * Get manager the game belongs to.
@@ -35,21 +36,9 @@ public interface IGame {
     List<IPlayer> getPlayers();
 
     /**
-     * Get our player instance.
-     * @return
-     */
-    IPlayer getMe();
-
-    /**
      * Join player to game.
-     * @param player
      * @param password
      */
-    void joinGame(IPlayer player, String password);
+    void join(String password);
 
-    /**
-     * Perform a submit.
-     * @param value
-     */
-    void submit(String value);
 }

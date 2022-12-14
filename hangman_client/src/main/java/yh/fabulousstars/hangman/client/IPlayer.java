@@ -31,4 +31,10 @@ public interface IPlayer {
      * @return 0 to MAX_DAMAGE
      */
     int getDamage();
+
+    /**
+     * Perform a submit.
+     * @param value
+     */
+    void submit(String value);
 }
