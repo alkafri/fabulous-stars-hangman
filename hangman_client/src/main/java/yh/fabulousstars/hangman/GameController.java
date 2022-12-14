@@ -130,7 +130,7 @@ public class GameController implements Initializable {
     @FXML
     public TextField joinPasswordField;
     @FXML
-    public ListView<IGame> gameListView;
+    public ListView<String> gameListView;
     @FXML
     public Button joinButton;
     private GameManager gameManager;
@@ -153,10 +153,12 @@ public class GameController implements Initializable {
         var playerName = playerNameField.getText().strip();
         var password = joinPasswordField.getText();
         if(!(name.isEmpty() || playerName.isEmpty())) {
-            setUIState(false, UISection.Create, UISection.Join);
+            setUIState(true, UISection.Create, UISection.Join);
             gameManager.createGame(name, playerName, password);
+            gameListView.getItems().add(name+"-"+playerName);
         } else {
-            //TODO: Show error
+            //Show error
+            showMessage("Game & Player Name is required",Alert.AlertType.ERROR.toString());
         }
     }
 
@@ -182,6 +184,7 @@ public class GameController implements Initializable {
     @FXML
     public void onJoinButtonClick(ActionEvent event) {
         var game = gameListView.getSelectionModel().getSelectedItem();
+        showMessage("Are you sure you want to join "+game+"!!!",Alert.AlertType.CONFIRMATION.toString());
     }
 
     /**
@@ -220,5 +223,23 @@ public class GameController implements Initializable {
         } else if (event instanceof SubmitWord) {
             // TODO: Submit word
         }
+    }
+     public static void showMessage(String message,String alert) {
+
+        if(alert.equals(Alert.AlertType.ERROR.toString())) {
+
+            Alert alertWindow = new Alert(Alert.AlertType.ERROR);
+            alertWindow.setTitle(Alert.AlertType.ERROR.toString());
+            alertWindow.setContentText(message);
+            alertWindow.showAndWait();
+
+        }
+        else if(alert.equals(Alert.AlertType.CONFIRMATION.toString())) {
+            Alert alertWindow = new Alert(Alert.AlertType.CONFIRMATION);
+            alertWindow.setTitle(Alert.AlertType.CONFIRMATION.toString());
+            alertWindow.setContentText(message);
+            alertWindow.showAndWait();
+        }
+
     }
 }
