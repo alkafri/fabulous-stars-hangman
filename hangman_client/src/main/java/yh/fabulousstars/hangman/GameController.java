@@ -54,11 +54,33 @@ public class GameController implements Initializable {
         GraphicsContext gc = canvas.getGraphicsContext2D();
         gc.setFill(Color.BLUE);
         gc.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
+
+
+
+        blackBarForLetter();
         hangmanFigure();
-        addLetter();
+        addWrongLetter();
 
 
 
+    }
+    public void blackBarForLetter() {
+        //Temporary until the proper word count can be used
+        int wordCount = 7;
+        int maxBarSize = 60;
+        int barSize = (int) (canvas.getWidth()*0.01* canvas.getHeight()*0.02);
+
+        if (barSize > maxBarSize) {
+            barSize = maxBarSize;
+        }
+        GraphicsContext gc = canvas.getGraphicsContext2D();
+
+        //Prints the image same amount of times as a word has letters
+        for (int i = 0; wordCount > i; i++) {
+
+        Image image = new Image("BlackBarTR.png");
+        gc.drawImage(image,barSize*i*1.5, canvas.getHeight()*0.8,barSize,canvas.getHeight()*0.01);
+        }
     }
     public void hangmanFigure() {
         GraphicsContext gc = canvas.getGraphicsContext2D();
@@ -117,18 +139,9 @@ public class GameController implements Initializable {
             gc.drawImage(image, 0, 0, canvas.getWidth()*0.3,canvas.getHeight()*0.5);
         }
 
-
-        /*
-        if (i == 1) {
-            gc.setStroke(Color.BLACK);
-            gc.setLineWidth(5);
-            gc.strokeLine(50,150,100,150);
-        }
-
-         */
     }
 
-    public void addLetter() {
+    public void addWrongLetter() {
         /*
         * if the guess is wrong make the letter appear in red
         * place them to the right of the hangman
@@ -140,7 +153,13 @@ public class GameController implements Initializable {
         * the amount can easily be changed, but I also don't think that
          */
         int counter = -1;
-        int letterSize = 80;
+        int maxLetterSize = 80;
+        int letterSize = (int) (canvas.getWidth()*0.01* canvas.getHeight()*0.02);
+
+        if (letterSize > maxLetterSize) {
+            letterSize = maxLetterSize;
+        }
+
         int rowOne = letterSize;
         int rowTwo = letterSize*2;
         int rowThree = letterSize*3;
@@ -198,7 +217,7 @@ public class GameController implements Initializable {
         //move this to a new function that can determine if a guess is correct or wrong
         guesses++;
         System.out.println(guesses+"Guesses button");
-        addLetter();
+        addWrongLetter();
         hangmanFigure();
         //^^^^^^^ to be moved to a better place
 
@@ -211,7 +230,7 @@ public class GameController implements Initializable {
             gameListView.getItems().add(name+"-"+playerName);
         } else {
             //Show error
-            showMessage("Game & Player Name is required",Alert.AlertType.ERROR.toString());
+            //showMessage("Game & Player Name is required",Alert.AlertType.ERROR.toString());
         }
     }
 
