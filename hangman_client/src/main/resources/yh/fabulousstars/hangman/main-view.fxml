@@ -61,7 +61,7 @@
          </Separator>
          <VBox HBox.hgrow="NEVER">
             <children>
-               <Label text="Games" />
+               <Label text="Games and Players" />
                <ListView fx:id="gameListView" prefHeight="200.0" prefWidth="200.0" />
                <Button fx:id="joinButton" alignment="CENTER" contentDisplay="CENTER" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#onJoinButtonClick" text="Join" />
             </children>
