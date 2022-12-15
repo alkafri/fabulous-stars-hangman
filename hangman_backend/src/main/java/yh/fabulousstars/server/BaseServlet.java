@@ -1,9 +1,6 @@
 package yh.fabulousstars.server;
 
-import com.google.appengine.api.datastore.DatastoreService;
-import com.google.appengine.api.datastore.DatastoreServiceFactory;
-import com.google.appengine.api.datastore.Entity;
-import com.google.appengine.api.datastore.Query;
+import com.google.appengine.api.datastore.*;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -108,6 +105,15 @@ public abstract class BaseServlet extends HttpServlet {
         }
     }
 
+    protected Entity getEntity(String type, String id) {
+        try {
+            return datastore.get(
+                    KeyFactory.createKey(type, id)
+            );
+        } catch (Exception ex) {}
+        return null;
+    }
+
     /**
      * Convert Entity properties to map of strings.
      *
@@ -121,17 +127,17 @@ public abstract class BaseServlet extends HttpServlet {
     }
 
     /**
-     * Get all clients.
-     * @return
+     * Get all entity ids.
+     * @return list of ids
      */
-    protected List<String> getAllClients() {
-        var clients = new LinkedList<String>();
-        var iter = datastore.prepare(new Query(PLAYER_TYPE).setKeysOnly()).asIterator();
+    protected List<String> getAllIds(String type) {
+        var ids = new LinkedList<String>();
+        var iter = datastore.prepare(new Query(type).setKeysOnly()).asIterator();
         while(iter.hasNext()) {
             var entity = iter.next();
-            clients.add(entity.getKey().getName());
+            ids.add(entity.getKey().getName());
         }
-        return clients;
+        return ids;
     }
 
     /**

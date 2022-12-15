@@ -41,11 +41,11 @@ public class GameClient implements IGameManager {
         this.handler = handler;
         this.clientName = null;
         this.player = null;
-        var cookieman = new CookieManager();
-        cookieman.setCookiePolicy(CookiePolicy.ACCEPT_ALL);
+        var cookieMan = new CookieManager();
+        cookieMan.setCookiePolicy(CookiePolicy.ACCEPT_ALL);
         this.http = HttpClient.newBuilder()
                 .followRedirects(HttpClient.Redirect.NORMAL)
-                .cookieHandler(cookieman)
+                .cookieHandler(cookieMan)
                 .version(HttpClient.Version.HTTP_2)
                 .build();
         this.gson = new GsonBuilder()
@@ -193,6 +193,7 @@ public class GameClient implements IGameManager {
             case "game_list" -> getGameList(serverEvent);
             case "player_list" -> getPlayerList(serverEvent);
             case "join" -> getJoinGame(serverEvent);
+            case "leave" -> getLeaveGame(serverEvent);
             default -> null;
         };
         if(gameEvent != null) {
@@ -201,9 +202,19 @@ public class GameClient implements IGameManager {
     }
 
     /**
+     * Build a LeaveGame event from serverEvent.
+     * @param serverEvent
+     * @return LeaveGame
+     */
+    private IGameEvent getLeaveGame(Map<String, String> serverEvent) {
+        Map<String,String> game = fromJson(serverEvent.get("json"));
+        return new LeaveGame(game.get("gameId"));
+    }
+
+    /**
      * Build a JoinGame event from serverEvent.
      * @param serverEvent
-     * @return
+     * @return JoinGame
      */
     private IGameEvent getJoinGame(Map<String, String> serverEvent) {
         if(serverEvent.containsKey("error")) {
@@ -220,7 +231,7 @@ public class GameClient implements IGameManager {
     /**
      * Build a PlayerList event from serverEvent.
      * @param serverEvent
-     * @return
+     * @return PlayerList
      */
     private IGameEvent getPlayerList(Map<String, String> serverEvent) {
         List<Map<String,String>> mapList = fromJson(serverEvent.get("json"));
@@ -237,7 +248,7 @@ public class GameClient implements IGameManager {
     /**
      * Build a GameList event from serverEvent.
      * @param serverEvent
-     * @return
+     * @return GameList
      */
     private IGameEvent getGameList(Map<String, String> serverEvent) {
         List<Map<String,String>> mapList = fromJson(serverEvent.get("json"));

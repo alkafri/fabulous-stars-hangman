@@ -1,20 +1,18 @@
 package yh.fabulousstars.server;
 
 import com.google.appengine.api.datastore.*;
-import yh.fabulousstars.server.models.Game;
-import yh.fabulousstars.server.models.Player;
-import yh.fabulousstars.server.utils.EntityUtils;
 
 import javax.servlet.annotation.WebServlet;
 import java.io.IOException;
 import java.util.*;
 
 /**
- * Game servlet handles game instance requests.
+ * Game servlet handles game requests.
  */
 @WebServlet(name = "GameServlet", value = "/api/*")
 public class GameServlet extends BaseServlet {
     public GameServlet() {
+        // api calls to respond to
         super(Arrays.asList("poll", "word", "guess", "connect", "disconnect", "leave", "join",
                 "create", "message", "list"));
     }
@@ -28,7 +26,7 @@ public class GameServlet extends BaseServlet {
             case "guess" -> gameGuess(ctx);
             case "connect" -> lobbyConnect(ctx, true);
             case "disconnect" -> lobbyConnect(ctx, false);
-            case "leave" -> gameLeave(ctx, false);
+            case "leave" -> gameLeave(ctx);
             case "join" -> lobbyJoin(ctx);
             case "create" -> lobbyCreate(ctx);
             case "message" -> message(ctx);
@@ -37,12 +35,48 @@ public class GameServlet extends BaseServlet {
         }
     }
 
-    private void gameLeave(RequestContext ctx, boolean b) {
+    /**
+     * Leave game and refresh player list for participants.
+     *
+     * events: list_players, leave
+     * @param ctx
+     */
+    private void gameLeave(RequestContext ctx) {
+        // get player
+        var player = getEntity(PLAYER_TYPE, ctx.session());
+        if(player == null) { return; }
+        // get game id
+        var gameId = player.getProperty("gameId").toString();
+        if(gameId == null) { return; }
+        // clear game id from player
+        player.setProperty("gameId", null);
+        datastore.put(player);
+        // update player list
+        listGamePlayers(ctx, gameId, "list_players");
+        addEvent(ctx.session(), "leave", Map.of(
+                "type", "leave",
+                "json", String.format("{\"gameId\":\"%s\"}", gameId)
+        ));
+    }
+
+    private void listGamePlayers(RequestContext ctx, String gameId, String eventName) {
+        var query = new Query(PLAYER_TYPE)
+                .setKeysOnly()
+                .setFilter(new Query.FilterPredicate("gameId", Query.FilterOperator.EQUAL, gameId));
+        var participants = datastore.prepare(query).asIterator();
+
+        var players = getPlayersFromIterator(participants);
+        var data = Map.of("type", eventName, "json", gson.toJson(players));
+        // broadcast to participants
+        for (var id : players) {
+            addEvent(id.get("clientId"), eventName, data);
+        }
     }
 
     /**
      * Client connect.
      *
+     * events: connected, connect_error
      * @param ctx
      * @param connect
      * @throws IOException
@@ -78,41 +112,41 @@ public class GameServlet extends BaseServlet {
     }
 
     /**
-     * Create game from lobby.
+     * Create game from lobby and join it.
      *
+     * events: "created", "create_error"
      * @param ctx
      */
     private void lobbyCreate(RequestContext ctx) {
-        // get session
-        var clientId = ctx.session();
-        Entity player = null;
-        try {
-            player = datastore.get(KeyFactory.createKey(PLAYER_TYPE,clientId));
-        } catch (EntityNotFoundException e) {
-            e.printStackTrace();
-            return;
-        }
+        // get player
+        Entity player = getEntity(PLAYER_TYPE, ctx.session());
+        if(player == null) { return; }
+        // if not in game...
         if (player.getProperty("gameId") == null) {
+            // name and password
             var name = checkName(ctx.req().getParameter("name"), GAME_TYPE);
             var pass = ctx.req().getParameter("password");
-            if (name != null) {
-                if (pass != null) {
+            if (name != null) { //if name
+                if (pass != null) { // if provided pass, adjust it
                     pass = pass.trim();
                     if (pass.equals("")) pass = null;
                 }
+                // create game
                 var entity = new Entity(GAME_TYPE);
                 entity.setProperty("name", name);
                 entity.setProperty("password", pass);
-                entity.setProperty("owner", clientId);
-                var key = datastore.put(entity);
+                entity.setProperty("owner", ctx.session());
+                var key = datastore.put(entity); // game id from db
+                // get entity as map
                 var game = getStringProperties(entity);
-                game.put("gameId", key.getName());
-                addEvent(clientId, "created", game);
-                listGames(ctx, true);
+                game.put("gameId", key.getName()); // set game id
+                addEvent(ctx.session(), "created", game); // send game created to player
+                listGames(ctx, true); // broadcast list of games
                 return;
             }
         }
-        addEvent(clientId, "create_error", Map.of("error", "Error creating game."));
+        // fail
+        addEvent(ctx.session(), "create_error", Map.of("error", "Error creating game."));
     }
 
     /**
@@ -194,7 +228,7 @@ public class GameServlet extends BaseServlet {
         var data = Map.of("type", "list_games", "json", gson.toJson(games));
         if(broadcast) {
             // broadcast pollable event
-            for(var id : getAllClients()) {
+            for(var id : getAllIds(PLAYER_TYPE)) {
                 addEvent(id, "game_list", data);
             }
         } else {
@@ -230,9 +264,9 @@ public class GameServlet extends BaseServlet {
     }
 
     /**
-     * List games.
+     * List players.
      * @param ctx
-     * @return list of games
+     * @return list of players
      */
     private void listPlayers(RequestContext ctx, boolean broadcast) {
         var players = new LinkedList<Map<String, String>>();
@@ -248,7 +282,7 @@ public class GameServlet extends BaseServlet {
         var data = Map.of("type", "player_list", "json", gson.toJson(players));
         if(broadcast) {
             // broadcast pollable event
-            for (var id : getAllClients()) {
+            for (var id : getAllIds(PLAYER_TYPE)) {
                 addEvent(id, "player_list", data);
             }
         } else {
@@ -275,4 +309,16 @@ public class GameServlet extends BaseServlet {
         datastore.delete(keys.toList());
     }
 
+    private List<Map<String,String>> getPlayersFromIterator(Iterator<Entity> iter) {
+        var players = new LinkedList<Map<String, String>>();
+        while (iter.hasNext()) {
+            var entity = iter.next(); // get datastore entity
+            var player = Map.of(
+                    "name", entity.getProperty("name").toString(),
+                    "clientId", entity.getKey().getName()
+            );
+            players.add(player);
+        }
+        return players;
+    }
 }
