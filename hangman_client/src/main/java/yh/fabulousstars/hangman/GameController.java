@@ -18,7 +18,6 @@ import yh.fabulousstars.hangman.client.events.GameStarted;
 import yh.fabulousstars.hangman.client.events.PlayerDamage;
 import yh.fabulousstars.hangman.client.events.PlayerJoined;
 import yh.fabulousstars.hangman.client.events.SubmitWord;
-import yh.fabulousstars.hangman.gui.CanvasClass;
 import yh.fabulousstars.hangman.localclient.GameManager;
 
 import java.net.URL;
@@ -30,6 +29,8 @@ public class GameController implements Initializable {
 
     int guesses = 0;
     int correctGuess = 0;
+    String letter;
+
 
     enum UISection {
         Create,
@@ -198,8 +199,8 @@ public class GameController implements Initializable {
             }
         }
     }
+
     public void addCorrectLetter() {
-        //Temporary until the proper word count can be used
         int wordCount = 7;
         int maxBarSize = 60;
         int barWidth = (int) (canvas.getWidth()*0.01);
@@ -219,17 +220,46 @@ public class GameController implements Initializable {
         gc.setFill(Color.GREEN);
         gc.setFont(new Font("Arial", letterSize));
 
+
         //Prints the image same amount of times as a word has letters
         for (int i = 0; correctGuess > i; i++) {
 
             if (correctGuess <= wordCount ) {
-                gc.fillText("E",barSize*i*1.5, canvas.getHeight()*0.8,barSize);
+                gc.fillText(letter,barSize*i*1.5, canvas.getHeight()*0.8,barSize);
+//String.valueOf(chars[0])
             }
         }
         if (correctGuess == wordCount){
             System.out.println("YOU WIN");
         }
 
+    }
+    public Character wordChecker() {
+        char[] letters = {'a', 'b', 'c', 'd', 'e', 'f', 'g'};
+
+        // Create a Scanner object to read user input
+        Scanner scanner = new Scanner(System.in);
+
+        // Get user input
+        System.out.print("Enter a letter: ");
+        char userInput = scanner.next().charAt(0);
+
+        // Check if the user input is in the array of letters
+        boolean found = false;
+        for (char letter : letters) {
+            if (letter == userInput) {
+                found = true;
+                break;
+            }
+        }
+
+        if (found) {
+            // Print the letter
+            System.out.println(userInput);
+           // String stringOfUserInput = String.valueOf(userInput);
+            return  userInput;
+        }
+        return null;
     }
     @FXML
     public Button createButton;
@@ -258,6 +288,8 @@ public class GameController implements Initializable {
         System.out.println(guesses+"Guesses button");
         correctGuess++;
         System.out.println(correctGuess+"Correct guess button");
+        letter = String.valueOf(wordChecker());
+
         addWrongLetter();
         addCorrectLetter();
         hangmanFigure();
