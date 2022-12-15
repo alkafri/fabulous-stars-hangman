@@ -32,7 +32,8 @@ public class GameServlet extends BaseServlet {
             case "join" -> lobbyJoin(ctx);
             case "create" -> lobbyCreate(ctx);
             case "message" -> message(ctx);
-            case "list" -> listGames(ctx);
+            case "listgames" -> listGames(ctx);
+            case "listplayers" -> listPlayers(ctx);
         }
     }
 
@@ -107,17 +108,20 @@ public class GameServlet extends BaseServlet {
     }
 
     private void lobbyJoin(RequestContext ctx) {
-
+        //TODO: lobbyJoin()
     }
 
 
     private void gameGuess(RequestContext ctx) {
+        //TODO: gameGuess()
     }
 
     private void gameWord(RequestContext ctx) {
+        //TODO: gameWord
     }
 
     private void message(RequestContext ctx) {
+        //TODO: message
     }
 
     /**
@@ -132,13 +136,15 @@ public class GameServlet extends BaseServlet {
         var iter = datastore.prepare(new Query(GAME_TYPE)).asIterator();
         while (iter.hasNext()) {
             var entity = iter.next(); // get datastore entity
-            var game = getStringProperties(entity);
-            game.put("gameId", entity.getKey().getName());
+            var game = Map.of(
+                    "name", entity.getProperty("name").toString(),
+                    "gameId", entity.getKey().getName()
+            );
             games.add(game);
         }
         var data = Map.of("type", "list_games", "json", gson.toJson(games));
         // create pollable event
-        addEvent(ctx.session().getId(), "list_games", data);
+        addEvent(ctx.session().getId(), "game_list", data);
     }
 
     /**
@@ -182,24 +188,28 @@ public class GameServlet extends BaseServlet {
     }
 
     /**
+     * List games.
      * @param ctx
-     * @param gameId
-     * @return
+     * @return list of games
      */
-    private List<Map<String, String>> listPlayers(RequestContext ctx, String gameId) {
+    private void listPlayers(RequestContext ctx) {
+        var gameId = ctx.req().getParameter("game");
         var players = new LinkedList<Map<String, String>>();
-        var query = new Query(PLAYER_TYPE);
-        var iter = datastore.prepare(
-                query.setFilter(new Query.FilterPredicate(
-                        "gameId", Query.FilterOperator.EQUAL, gameId))
-        ).asIterator();
-        while (iter.hasNext()) {
-            var entity = iter.next();
-            var player = getStringProperties(entity);
-            player.put("clientId", entity.getKey().getName());
-            players.add(player);
+        if(gameId!=null && !gameId.trim().isEmpty()) {
+            var query = new Query(PLAYER_TYPE);
+            var iter = datastore.prepare(
+                    query.setFilter(new Query.FilterPredicate(
+                            "gameId", Query.FilterOperator.EQUAL, gameId))
+            ).asIterator();
+            while (iter.hasNext()) {
+                var entity = iter.next();
+                var player = getStringProperties(entity);
+                player.put("clientId", entity.getKey().getName());
+                players.add(player);
+            }
+            var data = Map.of("type", "player_list", "json", gson.toJson(players));
+            addEvent(ctx.session().getId(), "player_list", data);
         }
-        return players;
     }
 
     /**

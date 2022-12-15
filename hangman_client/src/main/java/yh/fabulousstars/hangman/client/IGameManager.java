@@ -12,10 +12,9 @@ public interface IGameManager {
      * Create a new game.
      * Generates a GameCreated or CreateFailed.
      * @param name Game name
-     * @param playerName Player name
      * @param password Password
      */
-    void createGame(String name, String playerName, String password);
+    void createGame(String name, String password);
 
     /**
      * Get this client player.
@@ -23,5 +22,15 @@ public interface IGameManager {
      */
     IPlayer getClient();
 
-    void connect(String name, String password);
+    /**
+     *
+     * @param name
+     */
+    void connect(String name);
+
+    /**
+     *
+     */
+    void shutdown();
+
 }

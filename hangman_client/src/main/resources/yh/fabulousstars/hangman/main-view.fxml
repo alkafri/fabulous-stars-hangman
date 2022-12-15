@@ -5,67 +5,61 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.Separator?>
-<?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
-<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.RowConstraints?>
-<?import javafx.scene.layout.VBox?>
 
-<?import javafx.scene.canvas.Canvas?>
-<?import javafx.scene.layout.Pane?>
-<?import javafx.scene.layout.AnchorPane?>
-<?import yh.fabulousstars.hangman.gui.CanvasClass?>
-<VBox alignment="CENTER" spacing="20.0" style="-fx-background-color: lightblue; -fx-font-family: sans-serif; -fx-font-size: 14; -fx-font-weight: bold;" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="yh.fabulousstars.hangman.GameController">
-    <padding>
-        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
-    </padding>
-    <CanvasClass fx:id="canvas" VBox.vgrow="ALWAYS"/>
+<GridPane hgap="5.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minWidth="640.0" prefHeight="100.0" prefWidth="640.0" style="-fx-background-color: lightblue; -fx-font-family: sans-serif; -fx-font-size: 14; -fx-font-weight: bold;" vgap="5.0" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="yh.fabulousstars.hangman.GameController">
+   <children>
+      <Label alignment="CENTER" contentDisplay="CENTER" text="Welcome to the ultimate word guessing game." textFill="#724119" GridPane.columnIndex="0" GridPane.columnSpan="5" GridPane.halignment="CENTER" GridPane.hgrow="ALWAYS" GridPane.rowIndex="0" GridPane.vgrow="NEVER">
+         <GridPane.margin>
+            <Insets bottom="10.0" top="10.0" />
+         </GridPane.margin></Label>
 
-   <HBox VBox.vgrow="NEVER">
-      <children>
-         <GridPane hgap="3.0" HBox.hgrow="ALWAYS">
-           <columnConstraints>
-             <ColumnConstraints />
-             <ColumnConstraints hgrow="ALWAYS" maxWidth="1.7976931348623157E308" />
-           </columnConstraints>
-           <rowConstraints>
-             <RowConstraints vgrow="ALWAYS" />
-             <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="NEVER" />
-             <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="NEVER" />
-               <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="NEVER" />
-               <RowConstraints minHeight="40.0" prefHeight="40.0" vgrow="NEVER" />
-           </rowConstraints>
-            <children>
-                <Button fx:id="createButton" maxHeight="1.7976931348623157E308" onAction="#onCreateButtonClick" text="Create Game" GridPane.columnSpan="2" GridPane.halignment="CENTER" GridPane.hgrow="ALWAYS" GridPane.rowIndex="4" GridPane.vgrow="NEVER">
-                  <GridPane.margin>
-                     <Insets top="10.0" />
-                  </GridPane.margin></Button>
-               <Label alignment="CENTER" text="Game Name:" GridPane.halignment="RIGHT" GridPane.rowIndex="1" />
-               <Label alignment="CENTER" text="Join Password:" GridPane.halignment="RIGHT" GridPane.rowIndex="2" />
-               <TextField fx:id="gameNameField" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-               <TextField fx:id="joinPasswordField" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-               <Label alignment="CENTER" text="Player Name:" GridPane.halignment="RIGHT" GridPane.rowIndex="3" />
-               <TextField fx:id="playerNameField" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-               <Label alignment="CENTER" contentDisplay="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" text="Welcome to the ultimate word guessing game." textAlignment="CENTER" textFill="#724119" wrapText="true" GridPane.columnSpan="2" GridPane.hgrow="ALWAYS" GridPane.vgrow="ALWAYS" />
-            </children>
-            <HBox.margin>
-               <Insets />
-            </HBox.margin>
-         </GridPane>
-         <Separator orientation="VERTICAL" prefHeight="200.0">
-            <HBox.margin>
-               <Insets left="10.0" right="10.0" />
-            </HBox.margin>
-         </Separator>
-         <VBox HBox.hgrow="NEVER">
-            <children>
-               <Label text="Games and Players" />
-               <ListView fx:id="gameListView" prefHeight="200.0" prefWidth="200.0" />
-               <Button fx:id="joinButton" alignment="CENTER" contentDisplay="CENTER" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#onJoinButtonClick" text="Join" />
-            </children>
-         </VBox>
-      </children>
-   </HBox>
-</VBox>
+      <Label text="Player Name:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+      <TextField fx:id="playerNameField" maxWidth="1.7976931348623157E308" minWidth="160.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+      <Button fx:id="connectButton" onAction="#onConnectButton" text="Connect" GridPane.columnIndex="2" GridPane.rowIndex="1" />
+
+      <Label text="Game Name:" GridPane.rowIndex="3" />
+       <TextField fx:id="gameNameField" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.rowIndex="3" />
+      <Label text="Join Password:" GridPane.rowIndex="4" />
+      <TextField fx:id="joinPasswordField" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.rowIndex="4" />
+       <Button fx:id="createButton" onAction="#onCreateButtonClick" text="Create Game" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+
+      <Separator orientation="VERTICAL" GridPane.columnIndex="3" GridPane.rowIndex="1" GridPane.rowSpan="6" />
+
+      <Label text="Games" GridPane.columnIndex="4" GridPane.rowIndex="1" />
+      <ListView fx:id="gameListView" GridPane.columnIndex="4" GridPane.rowIndex="2" GridPane.rowSpan="4" GridPane.vgrow="ALWAYS">
+         <GridPane.margin>
+            <Insets bottom="5.0" />
+         </GridPane.margin></ListView>
+      <Button fx:id="joinButton" onAction="#onJoinButtonClick" text="Join" GridPane.columnIndex="4" GridPane.rowIndex="6" />
+
+       <ListView fx:id="lobbyChat" minHeight="120.0" GridPane.columnSpan="5" GridPane.hgrow="ALWAYS" GridPane.rowIndex="7" GridPane.vgrow="NEVER">
+         <GridPane.margin>
+            <Insets top="10.0" />
+         </GridPane.margin></ListView>
+      <Separator prefWidth="200.0" GridPane.columnSpan="3" GridPane.rowIndex="2" />
+   </children>
+   <columnConstraints>
+      <ColumnConstraints />
+      <ColumnConstraints />
+      <ColumnConstraints />
+      <ColumnConstraints />
+      <ColumnConstraints />
+   </columnConstraints>
+   <rowConstraints>
+      <RowConstraints />
+      <RowConstraints />
+      <RowConstraints />
+      <RowConstraints />
+      <RowConstraints />
+      <RowConstraints />
+      <RowConstraints />
+      <RowConstraints vgrow="ALWAYS" />
+      <RowConstraints />
+      <RowConstraints />
+      <RowConstraints />
+   </rowConstraints>
+</GridPane>
