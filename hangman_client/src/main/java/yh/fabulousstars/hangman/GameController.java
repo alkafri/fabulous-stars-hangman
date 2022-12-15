@@ -27,9 +27,7 @@ import java.util.ResourceBundle;
 import java.util.Scanner;
 
 public class GameController implements Initializable {
-
     private static final String BACKEND_URL = "http://localhost:8080";
-
     enum UISection {
         Connect,
         Create,
@@ -53,11 +51,22 @@ public class GameController implements Initializable {
     public ListView<PlayerList.Player> playerListView;
     @FXML
     public Button joinButton;
-    private GameClient gameClient;
-    private ObservableList<GameList.Game> gameList;
-    private ObservableList<PlayerList.Player> playerList;
-    private ObservableList<String> chatList;
+    private final GameClient gameClient;
+    private final ObservableList<GameList.Game> gameList;
+    private final ObservableList<PlayerList.Player> playerList;
+    private final ObservableList<String> chatList;
+    private GameStage gameWindow;
 
+    /**
+     * Constructor
+     */
+    public GameController() {
+        this.gameClient = new GameClient(BACKEND_URL, this::handleGameEvent);
+        this.gameWindow = null;
+        this.playerList = FXCollections.observableArrayList();
+        this.gameList = FXCollections.observableArrayList();
+        this.chatList = FXCollections.observableArrayList();
+    }
     /**
      * Create game clicked.
      * @param event
@@ -82,7 +91,6 @@ public class GameController implements Initializable {
             gameClient.connect(playerName);
         }
     }
-
 
     /**
      * Enable of disable UI section.
@@ -128,7 +136,6 @@ public class GameController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
 
-        gameList = FXCollections.observableArrayList();
         gameListView.setCellFactory(new Callback<>() {
             @Override
             public ListCell<GameList.Game> call(ListView<GameList.Game> gameListView) {
@@ -144,7 +151,6 @@ public class GameController implements Initializable {
         });
         gameListView.setItems(gameList);
 
-        playerList = FXCollections.observableArrayList();
         playerListView.setCellFactory(new Callback<>() {
             @Override
             public ListCell<PlayerList.Player> call(ListView<PlayerList.Player> playerListView) {
@@ -159,8 +165,6 @@ public class GameController implements Initializable {
             }
         });
         playerListView.setItems(playerList);
-
-        chatList = FXCollections.observableArrayList();
         lobbyChat.setItems(chatList);
 
         System.out.println("Initialized");
@@ -168,7 +172,7 @@ public class GameController implements Initializable {
 
         setUIState(false, UISection.Join, UISection.Create);
         setUIState(true, UISection.Connect);
-        gameClient = new GameClient(BACKEND_URL, this::handleGameEvent);
+
         GameApplication.getAppStage().setOnCloseRequest(windowEvent -> {
             gameClient.shutdown();
         });
@@ -184,11 +188,26 @@ public class GameController implements Initializable {
                 setUIState(false, UISection.Connect, UISection.Join, UISection.Create);
                 new GameStage(evt.getGame());
             }
-        } else if (event instanceof PlayerDamage) {
+        } else if (event instanceof PlayerJoined) {
+
+        } else if (event instanceof PlayerState) {
+
+        } else if (event instanceof GameCreate) {
+
+        } else if (event instanceof CreateFailed) {
+
+        } else if (event instanceof FailedToJoin) {
+
+        } else if (event instanceof JoinGame) {
+
+        } else if (event instanceof LeaveGame) {
 
         } else if (event instanceof GameStarted) {
 
         } else if (event instanceof SubmitWord) {
+
+        } else if (event instanceof SubmitGuess) {
+
         } else if (event instanceof GameList) {
             var evt = (GameList)event;
             gameList.clear();
@@ -206,6 +225,13 @@ public class GameController implements Initializable {
             } else {
                 setUIState(false, UISection.Connect);
                 setUIState(true, UISection.Join, UISection.Create);
+            }
+        } else if (event instanceof ChatMessage) {
+            var evt = (ChatMessage)event;
+            if(evt.isInGame()) {
+                //TODO: in ngame msg
+            } else {
+                chatList.add(0, evt.getMessage());
             }
         }
     }

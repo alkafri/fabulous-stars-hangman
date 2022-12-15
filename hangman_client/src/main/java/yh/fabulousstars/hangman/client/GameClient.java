@@ -194,11 +194,23 @@ public class GameClient implements IGameManager {
             case "player_list" -> getPlayerList(serverEvent);
             case "join" -> getJoinGame(serverEvent);
             case "leave" -> getLeaveGame(serverEvent);
+            case "message" -> getChatMessage(serverEvent);
             default -> null;
         };
         if(gameEvent != null) {
             Platform.runLater(() -> handler.handleGameEvent(gameEvent));
         }
+    }
+
+    /**
+     * Build a ChatMessage event from serverEvent.
+     * @param serverEvent
+     * @return
+     */
+    private IGameEvent getChatMessage(Map<String, String> serverEvent) {
+        var inGame = serverEvent.get("inGame").equals("1");
+        var message = serverEvent.get("message");
+        return new ChatMessage(message, inGame);
     }
 
     /**
