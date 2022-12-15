@@ -30,6 +30,11 @@ public class GameController implements Initializable {
     int guesses = 0;
     int correctGuess = 0;
     String letter;
+    String userWord = "hello";
+    int wordCount = userWord.length();
+
+    char[] charArray = new char[wordCount];
+
 
 
     enum UISection {
@@ -70,7 +75,6 @@ public class GameController implements Initializable {
     }
     public void blackBarForLetter() {
         //Temporary until the proper word count can be used
-        int wordCount = 7;
         int maxBarSize = 60;
         int barWidth = (int) (canvas.getWidth()*0.01);
         int barHeight = (int) (canvas.getHeight()*0.02);
@@ -87,6 +91,34 @@ public class GameController implements Initializable {
         Image image = new Image("BlackBarTR.png");
         gc.drawImage(image,barSize*i*1.5, canvas.getHeight()*0.8,barSize,canvas.getHeight()*0.01);
         }
+    }
+    public Character wordChecker() {
+        char[] letters = userWord.toCharArray();
+
+        // Create a Scanner object to read user input
+        Scanner scanner = new Scanner(System.in);
+
+        // Get user input
+        System.out.print("Enter a letter: ");
+        char userInput = scanner.next().charAt(0);
+
+        // Check if the user input is in the array of letters
+        for (int i = 0; i < letters.length; i++) {
+
+            if (letters[i] == userInput) {
+                correctGuess++;
+                // If a match is found, print the index and character
+                System.out.println("Found a match at index " + i + ": " + letters[i]);
+                //replace '*' with correct letter
+
+
+                charArray[i] = letters[i];
+
+            }
+        }
+
+
+        return null;
     }
     public void hangmanFigure() {
         GraphicsContext gc = canvas.getGraphicsContext2D();
@@ -201,7 +233,8 @@ public class GameController implements Initializable {
     }
 
     public void addCorrectLetter() {
-        int wordCount = 7;
+
+
         int maxBarSize = 60;
         int barWidth = (int) (canvas.getWidth()*0.01);
         int barHeight = (int) (canvas.getHeight()*0.02);
@@ -222,10 +255,10 @@ public class GameController implements Initializable {
 
 
         //Prints the image same amount of times as a word has letters
-        for (int i = 0; correctGuess > i; i++) {
+        for (int i = 0; wordCount > i; i++) {
 
             if (correctGuess <= wordCount ) {
-                gc.fillText(letter,barSize*i*1.5, canvas.getHeight()*0.8,barSize);
+                gc.fillText(String.valueOf(charArray[i]),barSize*i*1.5, canvas.getHeight()*0.8,barSize);
 //String.valueOf(chars[0])
             }
         }
@@ -234,33 +267,7 @@ public class GameController implements Initializable {
         }
 
     }
-    public Character wordChecker() {
-        char[] letters = {'a', 'b', 'c', 'd', 'e', 'f', 'g'};
 
-        // Create a Scanner object to read user input
-        Scanner scanner = new Scanner(System.in);
-
-        // Get user input
-        System.out.print("Enter a letter: ");
-        char userInput = scanner.next().charAt(0);
-
-        // Check if the user input is in the array of letters
-        boolean found = false;
-        for (char letter : letters) {
-            if (letter == userInput) {
-                found = true;
-                break;
-            }
-        }
-
-        if (found) {
-            // Print the letter
-            System.out.println(userInput);
-           // String stringOfUserInput = String.valueOf(userInput);
-            return  userInput;
-        }
-        return null;
-    }
     @FXML
     public Button createButton;
     @FXML
@@ -286,13 +293,14 @@ public class GameController implements Initializable {
         //move this to a new function that can determine if a guess is correct or wrong
         guesses++;
         System.out.println(guesses+"Guesses button");
-        correctGuess++;
+        //correctGuess++;
         System.out.println(correctGuess+"Correct guess button");
         letter = String.valueOf(wordChecker());
 
         addWrongLetter();
         addCorrectLetter();
         hangmanFigure();
+        canvasBackground();
         //^^^^^^^ to be moved to a better place
 
         var name = gameNameField.getText().strip();
@@ -347,6 +355,9 @@ public class GameController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
 
         System.out.println("Initialized");
+        for (int index = 0; index < wordCount; index++) {
+            charArray[index] = '*';
+        }
         //Keeps the canvas size updated
         canvas.widthProperty().addListener((observable, oldValue, newValue) -> canvasBackground());
         canvas.heightProperty().addListener((observable, oldValue, newValue) -> canvasBackground());
