@@ -49,36 +49,14 @@ public abstract class BaseServlet extends HttpServlet {
      * @throws IOException
      */
     private RequestContext setup(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        resp.setHeader("Content-Type", "application/json");
-        var session = getCookie(req,resp);
+        var session = req.getSession();
         var path = req.getPathInfo();
         var endpoint = path != null ? req.getPathInfo().substring(1) : "";
         if (endpoints.contains(endpoint)) {
-            System.out.println("Session: " + req.getSession().getId());
-            return new RequestContext(endpoint, session, req, resp);
+            resp.setHeader("Content-Type", "application/json");
+            return new RequestContext(endpoint, session.getId(), req, resp);
         }
         throw new FileNotFoundException(endpoint);
-    }
-
-    private String getCookie(HttpServletRequest req, HttpServletResponse resp) {
-        var cookiesArr = req.getCookies();
-        ArrayList<Cookie> cookies = new ArrayList<>();
-        if(cookiesArr != null) {
-            cookies.addAll(List.of(cookiesArr));
-        }
-        for (int i = 0; i < cookies.size(); i++) {
-            var cookie = cookies.get(i);
-            if(cookie.getName().equals("Hangman")) {
-                cookie.setMaxAge(3600 * 1000);
-                resp.addCookie(cookie);
-                return cookie.getValue();
-            }
-        }
-        var id = req.getSession().getId();
-        var cookie = new Cookie("Hangman", id);
-        cookie.setMaxAge(3600 * 1000);
-        resp.addCookie(cookie);
-        return id;
     }
 
     /**

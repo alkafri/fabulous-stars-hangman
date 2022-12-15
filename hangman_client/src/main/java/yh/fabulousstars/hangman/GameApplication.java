@@ -33,9 +33,6 @@ public class GameApplication extends Application {
     }
 
     public static void main(String[] args) {
-
-        java.net.CookieManager cm = new java.net.CookieManager(new CookieManager().getCookieStore(), CookiePolicy.ACCEPT_ALL);
-        java.net.CookieHandler.setDefault(cm);
         launch();
     }
 }

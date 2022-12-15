@@ -7,9 +7,7 @@ import javafx.application.Platform;
 import yh.fabulousstars.hangman.client.events.*;
 
 import java.lang.reflect.Type;
-import java.net.CookieManager;
-import java.net.URI;
-import java.net.URLEncoder;
+import java.net.*;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -43,8 +41,12 @@ public class GameClient implements IGameManager {
         this.handler = handler;
         this.clientName = null;
         this.player = null;
+        var cookieman = new CookieManager();
+        cookieman.setCookiePolicy(CookiePolicy.ACCEPT_ALL);
         this.http = HttpClient.newBuilder()
                 .followRedirects(HttpClient.Redirect.NORMAL)
+                .cookieHandler(cookieman)
+                .version(HttpClient.Version.HTTP_2)
                 .build();
         this.gson = new GsonBuilder()
                 .serializeNulls()
