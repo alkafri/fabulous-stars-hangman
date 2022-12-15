@@ -1,6 +1,7 @@
 package yh.fabulousstars.hangman;
 
 import javafx.application.Application;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -13,11 +14,13 @@ import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
+import javafx.util.Callback;
 import yh.fabulousstars.hangman.client.IGame;
 import yh.fabulousstars.hangman.client.IGameEvent;
 import yh.fabulousstars.hangman.client.events.*;
 import yh.fabulousstars.hangman.client.GameClient;
 import yh.fabulousstars.hangman.gui.CanvasClass;
+import yh.fabulousstars.hangman.gui.GameStage;
 
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -45,11 +48,15 @@ public class GameController implements Initializable {
     @FXML
     public TextField joinPasswordField;
     @FXML
-    public ListView<String> gameListView;
+    public ListView<GameList.Game> gameListView;
+    @FXML
+    public ListView<PlayerList.Player> playerListView;
     @FXML
     public Button joinButton;
     private GameClient gameClient;
     private ObservableList<GameList.Game> gameList;
+    private ObservableList<PlayerList.Player> playerList;
+    private ObservableList<String> chatList;
 
     /**
      * Create game clicked.
@@ -62,7 +69,6 @@ public class GameController implements Initializable {
         var password = joinPasswordField.getText();
         if(!name.isEmpty()) {
             setUIState(false, UISection.Create, UISection.Join);
-            setUIState(true, UISection.Create, UISection.Join);
             gameClient.createGame(name, password);
         } else {
             //Show error
@@ -102,7 +108,11 @@ public class GameController implements Initializable {
     @FXML
     public void onJoinButtonClick(ActionEvent event) {
         var game = gameListView.getSelectionModel().getSelectedItem();
-        showMessage("Are you sure you want to join "+game+"!!!",Alert.AlertType.CONFIRMATION);
+        if(showMessage("Are you sure you want to join "+game+"!!!",Alert.AlertType.CONFIRMATION)) {
+            setUIState(false, UISection.Join, UISection.Connect, UISection.Create);
+            // TODO: now just for show
+            new GameStage(gameClient.getDummyGame());
+        }
     }
 
     /**
@@ -118,6 +128,41 @@ public class GameController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
 
+        gameList = FXCollections.observableArrayList();
+        gameListView.setCellFactory(new Callback<>() {
+            @Override
+            public ListCell<GameList.Game> call(ListView<GameList.Game> gameListView) {
+                return new ListCell<>() {
+                    @Override
+                    protected void updateItem(GameList.Game game, boolean b) {
+                        super.updateItem(game, b);
+                        if(game==null) {setText(""); }
+                        else { setText(game.name()); }
+                    }
+                };
+            }
+        });
+        gameListView.setItems(gameList);
+
+        playerList = FXCollections.observableArrayList();
+        playerListView.setCellFactory(new Callback<>() {
+            @Override
+            public ListCell<PlayerList.Player> call(ListView<PlayerList.Player> playerListView) {
+                return new ListCell<>() {
+                    @Override
+                    protected void updateItem(PlayerList.Player player, boolean b) {
+                        super.updateItem(player, b);
+                        if(player==null) { setText(""); }
+                        else { setText(player.name()); }
+                    }
+                };
+            }
+        });
+        playerListView.setItems(playerList);
+
+        chatList = FXCollections.observableArrayList();
+        lobbyChat.setItems(chatList);
+
         System.out.println("Initialized");
         //Keeps the canvas size updated
 
@@ -130,8 +175,15 @@ public class GameController implements Initializable {
     }
 
     private void handleGameEvent(IGameEvent event) {
-        if(event instanceof PlayerJoined) {
-            //...
+        if(event instanceof JoinGame) {
+            var evt = (JoinGame)event;
+            if(evt.getError()==null) {
+                showMessage(evt.getError(), Alert.AlertType.ERROR);
+                setUIState(true, UISection.Join, UISection.Create);
+            } else {
+                setUIState(false, UISection.Connect, UISection.Join, UISection.Create);
+                new GameStage(evt.getGame());
+            }
         } else if (event instanceof PlayerDamage) {
 
         } else if (event instanceof GameStarted) {
@@ -141,6 +193,10 @@ public class GameController implements Initializable {
             var evt = (GameList)event;
             gameList.clear();
             gameList.addAll(evt.getGameList());
+        } else if (event instanceof PlayerList) {
+            var evt = (PlayerList)event;
+            playerList.clear();
+            playerList.addAll(evt.getPlayerList());
         } else if (event instanceof ClientConnect) {
             var evt = (ClientConnect)event;
             var err = evt.getError();
@@ -153,10 +209,11 @@ public class GameController implements Initializable {
             }
         }
     }
-     public static void showMessage(String message, Alert.AlertType type) {
+     public static boolean showMessage(String message, Alert.AlertType type) {
          Alert alertWindow = new Alert(type);
          alertWindow.setTitle(type.toString());
          alertWindow.setContentText(message);
-         alertWindow.showAndWait();
+         var res = alertWindow.showAndWait();
+         return res.get().equals(ButtonType.OK);
     }
 }

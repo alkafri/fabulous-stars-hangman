@@ -6,7 +6,7 @@ import javax.servlet.http.HttpSession;
 
 public record RequestContext(
         String endpoint,
-        HttpSession session,
+        String session,
         HttpServletRequest req,
         HttpServletResponse resp) {
 }

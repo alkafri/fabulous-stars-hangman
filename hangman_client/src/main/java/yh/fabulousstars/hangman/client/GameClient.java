@@ -4,10 +4,9 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import javafx.application.Platform;
-import yh.fabulousstars.hangman.client.events.ClientConnect;
-import yh.fabulousstars.hangman.client.events.GameCreate;
-import yh.fabulousstars.hangman.client.events.GameList;
+import yh.fabulousstars.hangman.client.events.*;
 
+import java.lang.reflect.Type;
 import java.net.CookieManager;
 import java.net.URI;
 import java.net.URLEncoder;
@@ -22,7 +21,7 @@ import java.util.Map;
 
 public class GameClient implements IGameManager {
     private static final long POLL_MS = 3000;
-    private final ArrayList<LocalGame> games;
+    private LocalGame currentGames;
     private final String backendUrl;
     private IGameEventHandler handler;
     private String clientName;
@@ -40,12 +39,11 @@ public class GameClient implements IGameManager {
      */
     public GameClient(String backendUrl, IGameEventHandler handler) {
         this.backendUrl = backendUrl;
-        this.games = new ArrayList<>();
+        this.currentGames = null;
         this.handler = handler;
         this.clientName = null;
         this.player = null;
         this.http = HttpClient.newBuilder()
-                .cookieHandler(new CookieManager())
                 .followRedirects(HttpClient.Redirect.NORMAL)
                 .build();
         this.gson = new GsonBuilder()
@@ -58,26 +56,29 @@ public class GameClient implements IGameManager {
         long nextPoll = 0; // next poll time
         while(!abort) {
             // poll delay
-            var delay = nextPoll - System.currentTimeMillis();
-            if (delay < 0) {
+            if (nextPoll < System.currentTimeMillis()) {
                 // poll
-                nextPoll = System.currentTimeMillis() + POLL_MS;
-                threadPoll();
-            } else {
-                // sleep
-                try {
-                    Thread.sleep(200);
-                } catch (InterruptedException e) {}
+                if(threadPoll()) {
+                    nextPoll = System.currentTimeMillis() + POLL_MS;
+                    continue;
+                }
             }
+            // sleep
+            try {
+                Thread.sleep(200);
+            } catch (InterruptedException e) {}
         }
     }
 
     private <T> T fromJson(String json) {
-        var typeToken = new TypeToken<T>() {}.getType();
-        return gson.fromJson(json, typeToken);
+        return gson.fromJson(json, new TypeToken<T>() {});
     }
 
-    private void threadPoll() {
+    /**
+     * Poll for game event.
+     * @return true for delay
+     */
+    private boolean threadPoll() {
         try {
             var req = HttpRequest.newBuilder(new URI(backendUrl + "/api/poll"))
                 .GET().build();
@@ -85,10 +86,12 @@ public class GameClient implements IGameManager {
             Map<String,String> event = fromJson(resp.body());
             if(event != null) {
                 sendEvent(event);
+                return false;
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return true;
     }
 
     /**
@@ -136,17 +139,27 @@ public class GameClient implements IGameManager {
         request(String.format("connect?name=%s", clientName),null);
         // start polling
         if(!thread.isAlive()) {
+            abort = false;
             thread.start();
         }
+    }
+
+    @Override
+    public void disconnect() {
+        request("disconnect",null);
+        abort = true;
     }
 
     /**
      * Join game.
      * @param gameId
      */
-    public void join(String gameId) {
+    public void join(String gameId, String password) {
         if(player != null) {
-            request(String.format("join?game=%s", gameId),null);
+            if(password==null) {
+                password = "";
+            }
+            request(String.format("join?game=%s&pass=%s", gameId, password),null);
         }
     }
 
@@ -177,10 +190,28 @@ public class GameClient implements IGameManager {
             case "created", "create_error" -> getGameCreate(serverEvent);
             case "game_list" -> getGameList(serverEvent);
             case "player_list" -> getPlayerList(serverEvent);
+            case "join" -> getJoinGame(serverEvent);
             default -> null;
         };
         if(gameEvent != null) {
             Platform.runLater(() -> handler.handleGameEvent(gameEvent));
+        }
+    }
+
+    /**
+     * Build a JoinGame event from serverEvent.
+     * @param serverEvent
+     * @return
+     */
+    private IGameEvent getJoinGame(Map<String, String> serverEvent) {
+        if(serverEvent.containsKey("error")) {
+            return new JoinGame(null, serverEvent.get("error"));
+        } else {
+            Map<String,String> gameMap = fromJson(serverEvent.get("json"));
+            currentGames = new LocalGame(this,
+                    gameMap.get("gameId"),
+                    gameMap.get("name"));
+            return new JoinGame(currentGames, null);
         }
     }
 
@@ -190,7 +221,15 @@ public class GameClient implements IGameManager {
      * @return
      */
     private IGameEvent getPlayerList(Map<String, String> serverEvent) {
-        throw new RuntimeException(); // TODO: getPlayerList
+        List<Map<String,String>> mapList = fromJson(serverEvent.get("json"));
+        List<PlayerList.Player> players = new ArrayList<>();
+        for (var map : mapList) {
+            players.add(new PlayerList.Player(
+                    map.get("clientId"),
+                    map.get("name")
+            ));
+        }
+        return new PlayerList(players);
     }
 
     /**
@@ -199,7 +238,14 @@ public class GameClient implements IGameManager {
      * @return
      */
     private IGameEvent getGameList(Map<String, String> serverEvent) {
-        List<GameList.Game> games = fromJson(serverEvent.get("json"));
+        List<Map<String,String>> mapList = fromJson(serverEvent.get("json"));
+        List<GameList.Game> games = new ArrayList<>();
+        for (var map : mapList) {
+            games.add(new GameList.Game(
+                    map.get("gameId"),
+                    map.get("name")
+            ));
+        }
         return new GameList(games);
     }
 
@@ -213,11 +259,10 @@ public class GameClient implements IGameManager {
         if(serverEvent.containsKey("error")) {
             return new GameCreate(null, serverEvent.get("error"));
         } else {
-            var game = new LocalGame(this,
+            currentGames = new LocalGame(this,
                     serverEvent.get("gameId"),
                     serverEvent.get("name"));
-            games.add(game);
-            return new GameCreate(game, null);
+            return new GameCreate(currentGames, null);
         }
     }
 
@@ -247,5 +292,10 @@ public class GameClient implements IGameManager {
             }
         } catch (InterruptedException e) {
         }
+    }
+
+    //TODO: Remove
+    public IGame getDummyGame() {
+        return new LocalGame(this, "dummy-id", "Some game");
     }
 }

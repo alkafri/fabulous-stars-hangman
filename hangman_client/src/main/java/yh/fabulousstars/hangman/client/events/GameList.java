@@ -3,12 +3,7 @@ package yh.fabulousstars.hangman.client.events;
 import java.util.List;
 
 public class GameList extends AbstractEvent {
-    public record Game(String gameId, String name) {
-        @Override
-        public String toString() {
-            return name;
-        }
-    }
+    public record Game(String gameId, String name) {}
     private List<Game> gameList;
 
     public GameList(List<Game> gameList) {

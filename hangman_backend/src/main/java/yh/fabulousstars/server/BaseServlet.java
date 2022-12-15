@@ -8,15 +8,13 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public abstract class BaseServlet extends HttpServlet {
     protected static final String PLAYER_TYPE = "Player";
@@ -52,12 +50,35 @@ public abstract class BaseServlet extends HttpServlet {
      */
     private RequestContext setup(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         resp.setHeader("Content-Type", "application/json");
+        var session = getCookie(req,resp);
         var path = req.getPathInfo();
         var endpoint = path != null ? req.getPathInfo().substring(1) : "";
         if (endpoints.contains(endpoint)) {
-            return new RequestContext(endpoint, req.getSession(), req, resp);
+            System.out.println("Session: " + req.getSession().getId());
+            return new RequestContext(endpoint, session, req, resp);
         }
         throw new FileNotFoundException(endpoint);
+    }
+
+    private String getCookie(HttpServletRequest req, HttpServletResponse resp) {
+        var cookiesArr = req.getCookies();
+        ArrayList<Cookie> cookies = new ArrayList<>();
+        if(cookiesArr != null) {
+            cookies.addAll(List.of(cookiesArr));
+        }
+        for (int i = 0; i < cookies.size(); i++) {
+            var cookie = cookies.get(i);
+            if(cookie.getName().equals("Hangman")) {
+                cookie.setMaxAge(3600 * 1000);
+                resp.addCookie(cookie);
+                return cookie.getValue();
+            }
+        }
+        var id = req.getSession().getId();
+        var cookie = new Cookie("Hangman", id);
+        cookie.setMaxAge(3600 * 1000);
+        resp.addCookie(cookie);
+        return id;
     }
 
     /**
@@ -121,6 +142,19 @@ public abstract class BaseServlet extends HttpServlet {
         return map;
     }
 
+    /**
+     * Get all clients.
+     * @return
+     */
+    protected List<String> getAllClients() {
+        var clients = new LinkedList<String>();
+        var iter = datastore.prepare(new Query(PLAYER_TYPE).setKeysOnly()).asIterator();
+        while(iter.hasNext()) {
+            var entity = iter.next();
+            clients.add(entity.getKey().getName());
+        }
+        return clients;
+    }
 
     /**
      * Add event to database for polling.
@@ -146,12 +180,14 @@ public abstract class BaseServlet extends HttpServlet {
      * @throws IOException
      */
     protected void poll(RequestContext ctx) throws IOException {
+
         // query first
-        var entity = datastore.prepare(
+        var entityIter = datastore.prepare(
                 new Query(EVENT_TYPE)
                         .addSort("created")
-        ).asSingleEntity();
-        if (entity != null) {
+        ).asIterator();
+        if (entityIter.hasNext()) {
+            var entity = entityIter.next();
             var map = getStringProperties(entity);
             // remove backend info
             map.remove("targetId");

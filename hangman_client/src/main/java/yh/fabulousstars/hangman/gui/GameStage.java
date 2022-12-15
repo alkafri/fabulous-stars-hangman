@@ -11,6 +11,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.stage.Window;
+import yh.fabulousstars.hangman.GameApplication;
 import yh.fabulousstars.hangman.client.IGame;
 import yh.fabulousstars.hangman.client.IPlayer;
 
@@ -35,11 +36,11 @@ public class GameStage extends Stage {
     private Map<String, CanvasWrapper> canvasMap;
     private Image[] stateImages;
 
-    public GameStage(Window parent, IGame game)
+    public GameStage(IGame game)
     {
         this.game = game;
         canvasMap = new HashMap<>();
-        initOwner(parent);
+        initOwner(GameApplication.getAppStage());
         setTitle("Hangman");
 
         var images = Arrays.asList(
@@ -85,6 +86,7 @@ public class GameStage extends Stage {
 
         var scene = new Scene(root);
         setScene(scene);
+        show();
     }
 
     private void onCanvasSize(Observable observable) {

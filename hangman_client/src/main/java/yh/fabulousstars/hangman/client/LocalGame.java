@@ -1,6 +1,7 @@
 package yh.fabulousstars.hangman.client;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 class LocalGame implements IGame {
@@ -42,11 +43,12 @@ class LocalGame implements IGame {
 
     @Override
     public List<IPlayer> getPlayers() {
-        return new ArrayList<>(players);
+        var player = new LocalPlayer("Bob","dummy-id");
+        return Arrays.asList(player);
     }
 
     @Override
     public void join(String password) {
-        manager.join(gameId);
+        manager.join(gameId, password);
     }
 }

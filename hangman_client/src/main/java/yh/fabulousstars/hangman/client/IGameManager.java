@@ -28,6 +28,8 @@ public interface IGameManager {
      */
     void connect(String name);
 
+    void disconnect();
+
     /**
      *
      */
