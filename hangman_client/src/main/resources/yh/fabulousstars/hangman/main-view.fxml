@@ -18,6 +18,7 @@
       <children>
          <GridPane hgap="3.0" HBox.hgrow="ALWAYS">
              <TextField fx:id="guessField" HBox.hgrow="ALWAYS" onAction="#onEnterPressed" promptText="Enter your guess here" GridPane.columnIndex="1" />
+             <TextField fx:id="playerWord" HBox.hgrow="ALWAYS" onAction="#selectedWord" promptText="Enter your word here" GridPane.columnIndex="2" />
 
             <children>
                 <Button fx:id="createButton" maxHeight="1.7976931348623157E308" onAction="#onCreateButtonClick" text="Create Game" GridPane.columnSpan="2" GridPane.halignment="CENTER" GridPane.hgrow="ALWAYS" GridPane.rowIndex="4" GridPane.vgrow="NEVER">
@@ -27,8 +28,6 @@
             </children>
 
          </GridPane>
-
-
       </children>
    </HBox>
 </VBox>

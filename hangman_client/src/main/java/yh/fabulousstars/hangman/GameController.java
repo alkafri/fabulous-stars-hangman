@@ -28,6 +28,7 @@ public class GameController implements Initializable {
 
 
     public TextField guessField;
+    public TextField playerWord;
     int wrongGuesses = 0;
     int correctGuess = 0;
     String userWord = "hello";
@@ -35,6 +36,9 @@ public class GameController implements Initializable {
 
     char[] charArray = new char[wordCount];
 
+    public void selectedWord() {
+        System.out.println(playerWord.getText());
+    }
 
 
     enum UISection {
@@ -259,10 +263,23 @@ public class GameController implements Initializable {
 
             }
         }
+        int counter = 0;
         if (foundMatch) {
+
+
+            for (int i = 0; i < letters.length; i++) {
+
+                if (charArray[i] != '*') {
+                    counter++;
+
+                }
+            }
             System.out.print("Enter a letter: ");
             // add a method to add all correct letter together
 
+        }
+        if (counter == wordCount) {
+            System.out.println("YOU WIN");
         }
         // If no matches were found, print "LOSER"
         if (!foundMatch) {
@@ -270,7 +287,7 @@ public class GameController implements Initializable {
             System.out.print("Enter a letter: ");
 
             System.out.println(wrongGuesses+"WRONG");
-            if (wrongGuesses == 11) {
+            if (wrongGuesses >= 11) {
                 System.out.println("GAME OVER");
             }
         }
@@ -326,11 +343,7 @@ public class GameController implements Initializable {
         }
     }
 
-    @FXML
-    public void onJoinButtonClick(ActionEvent event) {
-        var game = gameListView.getSelectionModel().getSelectedItem();
-        showMessage("Are you sure you want to join "+game+"!!!",Alert.AlertType.CONFIRMATION.toString());
-    }
+
 
     /**
      * Initialize game controller.
@@ -346,6 +359,7 @@ public class GameController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
 
         System.out.println("Initialized");
+        selectedWord();
         for (int index = 0; index < wordCount; index++) {
             charArray[index] = '*';
         }
@@ -372,22 +386,5 @@ public class GameController implements Initializable {
             // TODO: Submit word
         }
     }
-     public static void showMessage(String message,String alert) {
 
-        if(alert.equals(Alert.AlertType.ERROR.toString())) {
-
-            Alert alertWindow = new Alert(Alert.AlertType.ERROR);
-            alertWindow.setTitle(Alert.AlertType.ERROR.toString());
-            alertWindow.setContentText(message);
-            alertWindow.showAndWait();
-
-        }
-        else if(alert.equals(Alert.AlertType.CONFIRMATION.toString())) {
-            Alert alertWindow = new Alert(Alert.AlertType.CONFIRMATION);
-            alertWindow.setTitle(Alert.AlertType.CONFIRMATION.toString());
-            alertWindow.setContentText(message);
-            alertWindow.showAndWait();
-        }
-
-    }
 }
