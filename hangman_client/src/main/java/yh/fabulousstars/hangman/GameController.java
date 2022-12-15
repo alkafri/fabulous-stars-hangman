@@ -27,9 +27,9 @@ import java.util.Scanner;
 public class GameController implements Initializable {
 
 
-    int guesses = 0;
+    public TextField guessField;
+    int wrongGuesses = 0;
     int correctGuess = 0;
-    String letter;
     String userWord = "hello";
     int wordCount = userWord.length();
 
@@ -92,38 +92,10 @@ public class GameController implements Initializable {
         gc.drawImage(image,barSize*i*1.5, canvas.getHeight()*0.8,barSize,canvas.getHeight()*0.01);
         }
     }
-    public Character wordChecker() {
-        char[] letters = userWord.toCharArray();
-
-        // Create a Scanner object to read user input
-        Scanner scanner = new Scanner(System.in);
-
-        // Get user input
-        System.out.print("Enter a letter: ");
-        char userInput = scanner.next().charAt(0);
-
-        // Check if the user input is in the array of letters
-        for (int i = 0; i < letters.length; i++) {
-
-            if (letters[i] == userInput) {
-                correctGuess++;
-                // If a match is found, print the index and character
-                System.out.println("Found a match at index " + i + ": " + letters[i]);
-                //replace '*' with correct letter
-
-
-                charArray[i] = letters[i];
-
-            }
-        }
-
-
-        return null;
-    }
     public void hangmanFigure() {
         GraphicsContext gc = canvas.getGraphicsContext2D();
         // i = the amount of wrong guesses
-        int i = guesses;
+        int i = wrongGuesses;
 
         /*NOTE to self
         *Make own images
@@ -204,7 +176,7 @@ public class GameController implements Initializable {
         int rowThree = letterSize*3;
         int rowFour = letterSize*4;
         //change the "A" to the players input
-        for (int i = 0; i < guesses+1; i++) {
+        for (int i = 0; i < wrongGuesses+1; i++) {
             int letterSpacing = counter*letterSize;
 
             GraphicsContext gc = canvas.getGraphicsContext2D();
@@ -259,14 +231,57 @@ public class GameController implements Initializable {
 
             if (correctGuess <= wordCount ) {
                 gc.fillText(String.valueOf(charArray[i]),barSize*i*1.5, canvas.getHeight()*0.8,barSize);
-//String.valueOf(chars[0])
             }
-        }
-        if (correctGuess == wordCount){
-            System.out.println("YOU WIN");
         }
 
     }
+    public void onEnterPressed(ActionEvent event) {
+        String guessWord = guessField.getText();
+        char userInput = guessField.getCharacters().charAt(0);
+        // process the user input here...
+        char[] letters = userWord.toCharArray();
+
+        // Get user input
+
+        boolean foundMatch = false;
+        // Check if the user input is in the array of letters
+        for (int i = 0; i < letters.length; i++) {
+
+            if (letters[i] == userInput) {
+                // If a match is found, print the index and character
+                System.out.println("Found a match at index " + i + ": " + letters[i]);
+                //replace '*' with correct letter
+
+
+                charArray[i] = letters[i];
+                foundMatch = true;
+
+
+            }
+        }
+        if (foundMatch) {
+            System.out.print("Enter a letter: ");
+            // add a method to add all correct letter together
+
+        }
+        // If no matches were found, print "LOSER"
+        if (!foundMatch) {
+            wrongGuesses++;
+            System.out.print("Enter a letter: ");
+
+            System.out.println(wrongGuesses+"WRONG");
+            if (wrongGuesses == 11) {
+                System.out.println("GAME OVER");
+            }
+        }
+        if (guessWord.equals(userWord)){
+            System.out.println("YOU WIN");
+        }
+
+        canvasBackground();
+
+    }
+
 
     @FXML
     public Button createButton;
@@ -290,30 +305,6 @@ public class GameController implements Initializable {
     @FXML
     public void onCreateButtonClick(ActionEvent event) {
 
-        //move this to a new function that can determine if a guess is correct or wrong
-        guesses++;
-        System.out.println(guesses+"Guesses button");
-        //correctGuess++;
-        System.out.println(correctGuess+"Correct guess button");
-        letter = String.valueOf(wordChecker());
-
-        addWrongLetter();
-        addCorrectLetter();
-        hangmanFigure();
-        canvasBackground();
-        //^^^^^^^ to be moved to a better place
-
-        var name = gameNameField.getText().strip();
-        var playerName = playerNameField.getText().strip();
-        var password = joinPasswordField.getText();
-        if(!(name.isEmpty() || playerName.isEmpty())) {
-            setUIState(true, UISection.Create, UISection.Join);
-            gameManager.createGame(name, playerName, password);
-            gameListView.getItems().add(name+"-"+playerName);
-        } else {
-            //Show error
-            //showMessage("Game & Player Name is required",Alert.AlertType.ERROR.toString());
-        }
     }
 
     /**
@@ -329,7 +320,7 @@ public class GameController implements Initializable {
                 joinPasswordField.setDisable(!enabled);
                 createButton.setDisable(!enabled);
             } else if (section.equals(UISection.Join)) {
-                gameListView.setDisable(!enabled);
+                //gameListView.setDisable(!enabled);
                 joinButton.setDisable(!enabled);
             }
         }
@@ -366,7 +357,7 @@ public class GameController implements Initializable {
         GraphicsContext gc = canvas.getGraphicsContext2D();
         gc.setFill(Color.BLACK);
         gc.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
-        setUIState(false, UISection.Join);
+        //setUIState(false, UISection.Join);
         gameManager = new GameManager(this::handleGameEvent);
     }
 
