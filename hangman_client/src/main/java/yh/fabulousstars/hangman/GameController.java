@@ -1,33 +1,23 @@
 package yh.fabulousstars.hangman;
 
-import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.Scene;
-import javafx.scene.canvas.Canvas;
-import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.*;
-import javafx.scene.image.Image;
-import javafx.scene.layout.Pane;
-import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
 import javafx.util.Callback;
-import yh.fabulousstars.hangman.client.IGame;
+import yh.fabulousstars.hangman.client.GameManagerFactory;
 import yh.fabulousstars.hangman.client.IGameEvent;
+import yh.fabulousstars.hangman.client.IGameManager;
 import yh.fabulousstars.hangman.client.events.*;
 import yh.fabulousstars.hangman.client.GameClient;
-import yh.fabulousstars.hangman.gui.CanvasClass;
 import yh.fabulousstars.hangman.gui.GameStage;
 
 import java.net.URL;
 import java.util.ResourceBundle;
-import java.util.Scanner;
 
 public class GameController implements Initializable {
-    private static final String BACKEND_URL = "http://localhost:8080";
     enum UISection {
         Connect,
         Create,
@@ -51,7 +41,7 @@ public class GameController implements Initializable {
     public ListView<PlayerList.Player> playerListView;
     @FXML
     public Button joinButton;
-    private final GameClient gameClient;
+    private final IGameManager gameManager;
     private final ObservableList<GameList.Game> gameList;
     private final ObservableList<PlayerList.Player> playerList;
     private final ObservableList<String> chatList;
@@ -61,7 +51,7 @@ public class GameController implements Initializable {
      * Constructor
      */
     public GameController() {
-        this.gameClient = new GameClient(BACKEND_URL, this::handleGameEvent);
+        this.gameManager = GameManagerFactory.create(this::handleGameEvent);
         this.gameWindow = null;
         this.playerList = FXCollections.observableArrayList();
         this.gameList = FXCollections.observableArrayList();
@@ -78,7 +68,7 @@ public class GameController implements Initializable {
         var password = joinPasswordField.getText();
         if(!name.isEmpty()) {
             setUIState(false, UISection.Create, UISection.Join);
-            gameClient.createGame(name, password);
+            gameManager.createGame(name, password);
         } else {
             //Show error
             showMessage("Game & Player Name is required", Alert.AlertType.ERROR);
@@ -88,7 +78,7 @@ public class GameController implements Initializable {
     public void onConnectButton(ActionEvent actionEvent) {
         var playerName = playerNameField.getText().strip();
         if(!playerName.isEmpty()) {
-            gameClient.connect(playerName);
+            gameManager.connect(playerName);
         }
     }
 
@@ -115,11 +105,11 @@ public class GameController implements Initializable {
 
     @FXML
     public void onJoinButtonClick(ActionEvent event) {
-        var game = gameListView.getSelectionModel().getSelectedItem();
-        if(showMessage("Are you sure you want to join "+game+"!!!",Alert.AlertType.CONFIRMATION)) {
+        var gameRef = gameListView.getSelectionModel().getSelectedItem();
+        if(showMessage("Join game '"+gameRef.name()+"'?", Alert.AlertType.CONFIRMATION)) {
             setUIState(false, UISection.Join, UISection.Connect, UISection.Create);
-            // TODO: now just for show
-            new GameStage(gameClient.getDummyGame());
+            var game = gameManager.getGame(game.gameId());
+            game.
         }
     }
 
@@ -174,7 +164,7 @@ public class GameController implements Initializable {
         setUIState(true, UISection.Connect);
 
         GameApplication.getAppStage().setOnCloseRequest(windowEvent -> {
-            gameClient.shutdown();
+            gameManager.shutdown();
         });
     }
 

@@ -6,18 +6,18 @@ import java.util.List;
 
 class LocalGame implements IGame {
     private final String gameId;
-    private GameClient manager;
+    private GameManager manager;
     private String name;
     private List<LocalPlayer> players;
 
-    LocalGame(GameClient manager, String gameId, String name) {
+    LocalGame(GameManager manager, String gameId, String name) {
         this.gameId = gameId;
         this.manager = manager;
         this.name = name;
         players = new ArrayList<>();
     }
 
-    GameClient getClient() {
+    GameManager getClient() {
         return manager;
     }
 
@@ -37,18 +37,12 @@ class LocalGame implements IGame {
     }
 
     @Override
-    public String getGameTheme() {
-        return null;
-    }
-
-    @Override
-    public List<IPlayer> getPlayers() {
-        var player = new LocalPlayer("Bob","dummy-id");
-        return Arrays.asList(player);
-    }
-
-    @Override
     public void join(String password) {
         manager.join(gameId, password);
+    }
+
+    @Override
+    public void leave() {
+        manager.leave();
     }
 }

@@ -24,21 +24,10 @@ public interface IGame {
     String getName();
 
     /**
-     * Get game theme.
-     * @return theme name
-     */
-    String getGameTheme();
-
-    /**
-     * Get list of players.
-     * @return List of players.
-     */
-    List<IPlayer> getPlayers();
-
-    /**
      * Join player to game.
      * @param password
      */
     void join(String password);
 
+    void leave();
 }

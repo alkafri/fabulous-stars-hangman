@@ -6,24 +6,21 @@ import com.google.gson.reflect.TypeToken;
 import javafx.application.Platform;
 import yh.fabulousstars.hangman.client.events.*;
 
-import java.lang.reflect.Type;
 import java.net.*;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class GameClient implements IGameManager {
+class GameManager implements IGameManager {
     private static final long POLL_MS = 3000;
-    private LocalGame currentGames;
+    private LocalGame currentGame;
     private final String backendUrl;
     private IGameEventHandler handler;
     private String clientName;
-    private String clientPassword;
     private LocalPlayer player;
     private final HttpClient http;
     protected final Gson gson;
@@ -35,9 +32,9 @@ public class GameClient implements IGameManager {
      * @param backendUrl api
      * @param handler game event handler
      */
-    public GameClient(String backendUrl, IGameEventHandler handler) {
+    GameManager(String backendUrl, IGameEventHandler handler) {
         this.backendUrl = backendUrl;
-        this.currentGames = null;
+        this.currentGame = null;
         this.handler = handler;
         this.clientName = null;
         this.player = null;
@@ -122,6 +119,11 @@ public class GameClient implements IGameManager {
     }
 
     @Override
+    public IGame getGame() {
+        return currentGame;
+    }
+
+    @Override
     public void createGame(String name, String password) {
         var gameName = URLEncoder.encode(name, StandardCharsets.UTF_8);
         var gamePassword =  URLEncoder.encode(password, StandardCharsets.UTF_8);
@@ -163,6 +165,13 @@ public class GameClient implements IGameManager {
             }
             request(String.format("join?game=%s&pass=%s", gameId, password),null);
         }
+    }
+
+    /**
+     * Leave game.
+     */
+    void leave() {
+        request("leave",null);
     }
 
     /**
@@ -219,8 +228,9 @@ public class GameClient implements IGameManager {
      * @return LeaveGame
      */
     private IGameEvent getLeaveGame(Map<String, String> serverEvent) {
-        Map<String,String> game = fromJson(serverEvent.get("json"));
-        return new LeaveGame(game.get("gameId"));
+        var gameId = serverEvent.get("gameId"); // TODO check that gameId prop is set correctly in server
+        currentGame = null;
+        return new LeaveGame(gameId);
     }
 
     /**
@@ -233,10 +243,10 @@ public class GameClient implements IGameManager {
             return new JoinGame(null, serverEvent.get("error"));
         } else {
             Map<String,String> gameMap = fromJson(serverEvent.get("json"));
-            currentGames = new LocalGame(this,
+            currentGame = new LocalGame(this,
                     gameMap.get("gameId"),
                     gameMap.get("name"));
-            return new JoinGame(currentGames, null);
+            return new JoinGame(currentGame, null);
         }
     }
 
@@ -284,10 +294,10 @@ public class GameClient implements IGameManager {
         if(serverEvent.containsKey("error")) {
             return new GameCreate(null, serverEvent.get("error"));
         } else {
-            currentGames = new LocalGame(this,
+            currentGame = new LocalGame(this,
                     serverEvent.get("gameId"),
                     serverEvent.get("name"));
-            return new GameCreate(currentGames, null);
+            return new GameCreate(currentGame, null);
         }
     }
 
@@ -317,10 +327,5 @@ public class GameClient implements IGameManager {
             }
         } catch (InterruptedException e) {
         }
-    }
-
-    //TODO: Remove
-    public IGame getDummyGame() {
-        return new LocalGame(this, "dummy-id", "Some game");
     }
 }

@@ -3,35 +3,44 @@ package yh.fabulousstars.hangman.client;
 public interface IGameManager {
 
     /**
-     * Get list of games.
-     * @return List of games.
+     * Request list of games.
+     * Generates a GameList event from server.
      */
     void listGames();
 
     /**
-     * Create a new game.
-     * Generates a GameCreated or CreateFailed.
+     * Get game interface for current game.
+     * @return IGame
+     */
+    IGame getGame();
+
+    /**
+     * Request creation of a new game.
+     * Generates a GameCreated or CreateFailed from server.
      * @param name Game name
      * @param password Password
      */
     void createGame(String name, String password);
 
     /**
-     * Get this client player.
-     * @return is
+     * Get this player interface.
+     * @return IPlayer
      */
     IPlayer getClient();
 
     /**
-     *
-     * @param name
+     * Connect to server.
+     * @param name player name
      */
     void connect(String name);
 
+    /**
+     * Graceful disconnect from server.
+     */
     void disconnect();
 
     /**
-     *
+     * Graceful shutdown of this manager.
      */
     void shutdown();
 
