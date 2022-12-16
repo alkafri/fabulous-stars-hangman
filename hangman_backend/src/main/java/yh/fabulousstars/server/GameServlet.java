@@ -208,14 +208,31 @@ public class GameServlet extends BaseServlet {
         ));
     }
 
-
+    /**
+     * Make a guess.
+     *
+     * @param ctx
+     */
     private void gameGuess(RequestContext ctx) {
-        //TODO: gameGuess()
+        var clientId = ctx.session();
+        var playerEntity = getEntity(PLAYER_TYPE, clientId);
+        if(playerEntity!=null) {
+            var gameEntity = getEntity(GAME_STATE_TYPE, playerEntity.getProperty("gameId").toString());
+
+        }
     }
 
+    /**
+     * Set player word.
+     * @param ctx
+     */
     private void gameWord(RequestContext ctx) {
-        //TODO: gameWord
-    }
+        var clientId = ctx.session();
+        var playerEntity = getEntity(PLAYER_TYPE, clientId);
+        if(playerEntity!=null) {
+            var gameState = getGameState(playerEntity.getProperty("gameId").toString());
+
+        }    }
 
     private void message(RequestContext ctx) {
         var clientId = ctx.session();

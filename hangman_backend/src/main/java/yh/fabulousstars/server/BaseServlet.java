@@ -3,6 +3,7 @@ package yh.fabulousstars.server;
 import com.google.appengine.api.datastore.*;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import yh.fabulousstars.server.game.GameState;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
@@ -16,6 +17,7 @@ import java.util.*;
 public abstract class BaseServlet extends HttpServlet {
     protected static final String PLAYER_TYPE = "Player";
     protected static final String GAME_TYPE = "Game";
+    protected static final String GAME_STATE_TYPE = "GameState";
     protected static final String EVENT_TYPE = "Event";
     protected final DatastoreService datastore; // google datastore service api
     protected final Gson gson; // google json serializer
@@ -112,6 +114,11 @@ public abstract class BaseServlet extends HttpServlet {
             );
         } catch (Exception ex) {}
         return null;
+    }
+
+    protected GameState getGameState(String gameId) {
+        var stateEntity = getEntity(GAME_STATE_TYPE, gameId);
+
     }
 
     /**
