@@ -1,6 +1,8 @@
 package yh.fabulousstars.server;
 
 import com.google.appengine.api.datastore.*;
+import yh.fabulousstars.server.game.GameLogics;
+import yh.fabulousstars.server.game.GameState;
 
 import javax.servlet.annotation.WebServlet;
 import java.io.IOException;
@@ -133,13 +135,17 @@ public class GameServlet extends BaseServlet {
                     pass = pass.trim();
                     if (pass.equals("")) pass = null;
                 }
-                // create game
+                // create game meta
                 var entity = new Entity(GAME_TYPE);
                 entity.setProperty("name", name);
                 entity.setProperty("password", pass);
                 entity.setProperty("owner", ctx.session());
                 var key = datastore.put(entity); // game id from db
-                // get entity as map
+                // create game state
+                var state = new GameState();
+                state.addPlayer(ctx.session());
+                putGameState(key.getName(), state);
+                // get game meta entity as map
                 var game = getStringProperties(entity);
                 game.put("gameId", key.getName()); // set game id
                 addEvent(ctx.session(), "created", game); // send game created to player
@@ -215,24 +221,34 @@ public class GameServlet extends BaseServlet {
      */
     private void gameGuess(RequestContext ctx) {
         var clientId = ctx.session();
+        var guess = ctx.req().getParameter("guess");
         var playerEntity = getEntity(PLAYER_TYPE, clientId);
         if(playerEntity!=null) {
-            var gameEntity = getEntity(GAME_STATE_TYPE, playerEntity.getProperty("gameId").toString());
-
+            var gameId = playerEntity.getProperty("gameId").toString();
+            var state = getGameState(gameId); // get state
+            GameLogics.makeGuess(state, clientId, guess); // play
+            putGameState(gameId, state); // store state
+            // todo: make guess should return events to send
         }
     }
 
     /**
      * Set player word.
+     *
      * @param ctx
      */
     private void gameWord(RequestContext ctx) {
         var clientId = ctx.session();
+        var word = ctx.req().getParameter("word");
         var playerEntity = getEntity(PLAYER_TYPE, clientId);
         if(playerEntity!=null) {
-            var gameState = getGameState(playerEntity.getProperty("gameId").toString());
-
-        }    }
+            var gameId = playerEntity.getProperty("gameId").toString();
+            var state = getGameState(gameId); // get state
+            GameLogics.setWord(state, clientId, word); // play
+            putGameState(gameId, state); // store state
+            // todo: set word should return events to send
+        }
+    }
 
     private void message(RequestContext ctx) {
         var clientId = ctx.session();

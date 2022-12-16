@@ -10,8 +10,7 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 public abstract class BaseServlet extends HttpServlet {
@@ -107,6 +106,12 @@ public abstract class BaseServlet extends HttpServlet {
         }
     }
 
+    /**
+     * Get entity from database.
+     * @param type
+     * @param id
+     * @return entity
+     */
     protected Entity getEntity(String type, String id) {
         try {
             return datastore.get(
@@ -116,9 +121,38 @@ public abstract class BaseServlet extends HttpServlet {
         return null;
     }
 
+    /**
+     * Gut stati into db.
+     * @param gameId
+     * @return
+     */
     protected GameState getGameState(String gameId) {
         var stateEntity = getEntity(GAME_STATE_TYPE, gameId);
+        var bytes = (byte[])stateEntity.getProperty("state");
+         try(ByteArrayInputStream byteInout = new ByteArrayInputStream(bytes)) {
+             var objectInput = new ObjectInputStream(byteInout);
+             return (GameState) objectInput.readObject();
+         } catch (Exception ex) {
+             ex.printStackTrace();
+         }
+         return null;
+    }
 
+    /**
+     * Gut stati into db.
+     * @param gameId
+     * @return
+     */
+    protected void putGameState(String gameId, GameState gameState) {
+        try(ByteArrayOutputStream byteOutput = new ByteArrayOutputStream()) {
+            var objectOutput = new ObjectOutputStream(byteOutput);
+            objectOutput.writeObject(gameState);
+            var entity = new Entity(GAME_STATE_TYPE, gameId);
+            entity.setProperty("state", byteOutput.toByteArray());
+            datastore.put(entity);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
     }
 
     /**

@@ -1,31 +1,59 @@
 package yh.fabulousstars.server.game;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
+/**
+ * The game state holds the actual state of the game.
+ * GameLogics methods operate on GameState instances.
+ */
 public class GameState {
     private HashMap<String,String> wordBucket;
-    private List<String> players;
+    private HashMap<String,PlayerState> players;
 
     public GameState() {
         this.wordBucket = new HashMap<>();
-        this.players = new ArrayList<>();
+        this.players = new HashMap<>();
     }
 
-    public void setWord(String clientId, String word) {
+    void setWord(String clientId, String word) {
         wordBucket.put(clientId, word);
     }
 
-    public String getWord(String clientId) {
-        return wordBucket.get(clientId);
+    /**
+     * Get random word from bucket for each player not belonging to player.
+     */
+    void chooseWords() {
+        // map of clientId -> word
+        var wordKeys = new ArrayList<>(wordBucket.keySet());
+        Collections.shuffle(wordKeys); // shuffle key order
+        // choose word for each player
+        for (var player : getPlayers()) {
+            // get first word not belonging to player
+            for (int i = 0; i < wordKeys.size(); i++) {
+                var wordKey = wordKeys.get(i);
+                if(!wordKey.equals(player.getKey())) {
+                    player.getValue().setCurrentWord(wordBucket.get(wordKey));
+                    wordKeys.remove(wordKey);
+                    break;
+                }
+            }
+        }
+        wordBucket.keySet();
     }
 
-    public void removeWord(String clientId) {
+    void removeWord(String clientId) {
         wordBucket.remove(clientId);
     }
 
-    public List<String> getPlayers() {
-        return players;
+    public Set<Map.Entry<String, PlayerState>> getPlayers() {
+        return players.entrySet();
+    }
+
+    public void addPlayer(String clientId) {
+        players.put(clientId, new PlayerState());
+    }
+
+    public void removePlayer(String clientId) {
+        players.remove(clientId);
     }
 }
