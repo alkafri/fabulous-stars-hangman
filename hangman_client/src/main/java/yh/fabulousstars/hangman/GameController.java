@@ -21,6 +21,7 @@ import yh.fabulousstars.hangman.client.events.SubmitWord;
 import yh.fabulousstars.hangman.localclient.GameManager;
 
 import java.net.URL;
+import java.util.Arrays;
 import java.util.ResourceBundle;
 import java.util.Scanner;
 
@@ -28,17 +29,14 @@ public class GameController implements Initializable {
 
 
     public TextField guessField;
-    public TextField playerWord;
     int wrongGuesses = 0;
     int correctGuess = 0;
-    String userWord = "hello";
+    String userWord = "hello".toUpperCase();
     int wordCount = userWord.length();
 
-    char[] charArray = new char[wordCount];
+    char[] correctLetter = new char[wordCount];
+    char[] wrongLetter = new char[12];
 
-    public void selectedWord() {
-        System.out.println(playerWord.getText());
-    }
 
 
     enum UISection {
@@ -64,7 +62,7 @@ public class GameController implements Initializable {
         //creating a rectangle covering 100% of the canvas makes it look like a background
         //The color is able to change
         GraphicsContext gc = canvas.getGraphicsContext2D();
-        gc.setFill(Color.BLUE);
+        gc.setFill(Color.LIGHTSKYBLUE);
         gc.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
 
 
@@ -97,62 +95,27 @@ public class GameController implements Initializable {
         }
     }
     public void hangmanFigure() {
+
         GraphicsContext gc = canvas.getGraphicsContext2D();
-        // i = the amount of wrong guesses
-        int i = wrongGuesses;
 
-        /*NOTE to self
-        *Make own images
-        * 1 for each state the hangman can be in
-        * make them with transparent background
-        * experiment with what a good size is
-        * */
+        var images = Arrays.asList(
+                "HangmanTranState1.png",
+                "HangmanTranState2.png",
+                "HangmanTranState3.png",
+                "HangmanTranState4.png",
+                "HangmanTranState5.png",
+                "HangmanTranState6.png",
+                "HangmanTranState7.png",
+                "HangmanTranState8.png",
+                "HangmanTranState9.png",
+                "HangmanTranState10.png",
+                "HangmanTranState11.png");
 
-        if (i == 1) {
-            Image image = new Image("HangmanTranState1.png");
-            gc.drawImage(image, 0, 0, canvas.getWidth()*0.3,canvas.getHeight()*0.5 );
-        }
-        if (i == 2) {
-            Image image = new Image("HangmanTranState2.png");
-            gc.drawImage(image, 0, 0, canvas.getWidth()*0.3,canvas.getHeight()*0.5);
-        }
-        if (i == 3) {
-            Image image = new Image("HangmanTranState3.png");
-            gc.drawImage(image, 0, 0, canvas.getWidth()*0.3,canvas.getHeight()*0.5);
-        }
-        if (i == 4) {
-            Image image = new Image("HangmanTranState4.png");
-            gc.drawImage(image, 0, 0, canvas.getWidth()*0.3,canvas.getHeight()*0.5);
-        }
-        if (i == 5) {
-            Image image = new Image("HangmanTranState5.png");
-            gc.drawImage(image, 0, 0, canvas.getWidth()*0.3,canvas.getHeight()*0.5);
-        }
-        if (i == 6) {
-            Image image = new Image("HangmanTranState6.png");
-            gc.drawImage(image, 0, 0, canvas.getWidth()*0.3,canvas.getHeight()*0.5);
-        }
-        if (i == 7) {
-            Image image = new Image("HangmanTranState7.png");
-            gc.drawImage(image, 0, 0, canvas.getWidth()*0.3,canvas.getHeight()*0.5);
-        }
-        if (i == 8) {
-            Image image = new Image("HangmanTranState8.png");
-            gc.drawImage(image, 0, 0, canvas.getWidth()*0.3,canvas.getHeight()*0.5);
-        }
-        if (i == 9) {
-            Image image = new Image("HangmanTranState9.png");
-            gc.drawImage(image, 0, 0, canvas.getWidth()*0.3,canvas.getHeight()*0.5);
-        }
-        if (i == 10) {
-            Image image = new Image("HangmanTranState10.png");
-            gc.drawImage(image, 0, 0, canvas.getWidth()*0.3,canvas.getHeight()*0.5);
-        }
-        if (i >= 11) {
-            Image image = new Image("HangmanTranState11.png");
-            gc.drawImage(image, 0, 0, canvas.getWidth()*0.3,canvas.getHeight()*0.5);
-        }
+        for (int i = 0; i < wrongGuesses; i++) {
+            Image image = new Image(images.get(i));
+            gc.drawImage(image, 0, 10, canvas.getWidth()*0.3,canvas.getHeight()*0.5 );
 
+        }
     }
 
     public void addWrongLetter() {
@@ -168,7 +131,7 @@ public class GameController implements Initializable {
          */
         Scanner scanner = new Scanner(System.in);
         int counter = -1;
-        int maxLetterSize = 80;
+        int maxLetterSize = 100;
         int letterSize = (int) (canvas.getWidth()*0.01* canvas.getHeight()*0.02);
 
         if (letterSize > maxLetterSize) {
@@ -177,8 +140,6 @@ public class GameController implements Initializable {
 
         int rowOne = letterSize;
         int rowTwo = letterSize*2;
-        int rowThree = letterSize*3;
-        int rowFour = letterSize*4;
         //change the "A" to the players input
         for (int i = 0; i < wrongGuesses+1; i++) {
             int letterSpacing = counter*letterSize;
@@ -189,17 +150,12 @@ public class GameController implements Initializable {
             gc.setFont(new Font("Arial", letterSize));
 
             if (i < 6 && i > 0) {
-                gc.fillText("A", 0+letterSpacing+ canvas.getWidth()*0.3, rowOne);
+                gc.fillText(String.valueOf(wrongLetter[i]), 0+letterSpacing+ canvas.getWidth()*0.3, rowOne);
             }
             if (i < 11 && i > 5) {
-                gc.fillText("B", 0+letterSpacing+ canvas.getWidth()*0.3, rowTwo);
+                gc.fillText(String.valueOf(wrongLetter[i]), 0+letterSpacing+ canvas.getWidth()*0.3, rowTwo);
             }
-            if (i < 16 && i > 10) {
-                gc.fillText("C", 0+letterSpacing+ canvas.getWidth()*0.3, rowThree);
-            }
-            if (i < 21 && i > 15) {
-                gc.fillText("D", 0+letterSpacing+ canvas.getWidth()*0.3, rowFour);
-            }
+
 
             counter++;
             if (counter > 4) {
@@ -234,68 +190,83 @@ public class GameController implements Initializable {
         for (int i = 0; wordCount > i; i++) {
 
             if (correctGuess <= wordCount ) {
-                gc.fillText(String.valueOf(charArray[i]),barSize*i*1.5, canvas.getHeight()*0.8,barSize);
+                gc.fillText(String.valueOf(correctLetter[i]),barSize*i*1.5, canvas.getHeight()*0.8,barSize);
             }
         }
 
     }
     public void onEnterPressed(ActionEvent event) {
-        String guessWord = guessField.getText();
-        char userInput = guessField.getCharacters().charAt(0);
-        // process the user input here...
-        char[] letters = userWord.toCharArray();
+
+        int counter = 0;
+        boolean foundMatch = false;
 
         // Get user input
+        String guessWord = guessField.getText().toUpperCase();
+        char userInput = guessWord.charAt(0);
+        // process the user input here...
+        char[] letters = userWord.toCharArray();
+        guessField.clear();
 
-        boolean foundMatch = false;
-        // Check if the user input is in the array of letters
-        for (int i = 0; i < letters.length; i++) {
+        if (guessWord.length() > 1) {
+            if (guessWord.equals(userWord)) {
 
-            if (letters[i] == userInput) {
-                // If a match is found, print the index and character
-                System.out.println("Found a match at index " + i + ": " + letters[i]);
-                //replace '*' with correct letter
+                counter = wordCount;
+                for (int i = 0; i < letters.length; i++) {
 
+                    if (letters[i] == guessWord.charAt(i)) {
+                        // If a match is found, print the index and character
+                        System.out.println("Found a match at index " + i + ": " + letters[i]);
+                        correctLetter[i] = letters[i];
 
-                charArray[i] = letters[i];
-                foundMatch = true;
-
-
+                    }
+                }
             }
-        }
-        int counter = 0;
-        if (foundMatch) {
 
+        } else {
+
+            // Check if the user input is in the array of letters
+            for (int i = 0; i < letters.length; i++) {
+
+                if (letters[i] == userInput) {
+                    // If a match is found, print the index and character
+                    System.out.println("Found a match at index " + i + ": " + letters[i]);
+                    //replace '*' with correct letter
+
+                    correctLetter[i] = letters[i];
+                    foundMatch = true;
+
+                }
+            }
+            // Check if the user has lost
+            if (!foundMatch) {
+                wrongGuesses++;
+
+                wrongLetter[wrongGuesses] = userInput;
+                if (wrongGuesses >= 11) {
+                    System.out.println("GAME OVER");
+                }
+            }
+
+        }
+        if (foundMatch) {
 
             for (int i = 0; i < letters.length; i++) {
 
-                if (charArray[i] != '*') {
+                if (correctLetter[i] != '*') {
                     counter++;
 
                 }
             }
-            System.out.print("Enter a letter: ");
-            // add a method to add all correct letter together
-
         }
+
+        // Check if the player has won
         if (counter == wordCount) {
             System.out.println("YOU WIN");
         }
-        // If no matches were found, print "LOSER"
-        if (!foundMatch) {
-            wrongGuesses++;
-            System.out.print("Enter a letter: ");
 
-            System.out.println(wrongGuesses+"WRONG");
-            if (wrongGuesses >= 11) {
-                System.out.println("GAME OVER");
-            }
-        }
-        if (guessWord.equals(userWord)){
-            System.out.println("YOU WIN");
-        }
 
         canvasBackground();
+
 
     }
 
@@ -359,9 +330,8 @@ public class GameController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
 
         System.out.println("Initialized");
-        selectedWord();
         for (int index = 0; index < wordCount; index++) {
-            charArray[index] = '*';
+            correctLetter[index] = '*';
         }
         //Keeps the canvas size updated
         canvas.widthProperty().addListener((observable, oldValue, newValue) -> canvasBackground());

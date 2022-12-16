@@ -9,16 +9,13 @@
 <?import yh.fabulousstars.hangman.gui.CanvasClass?>
 <?import javafx.scene.control.TextField?>
 <VBox alignment="CENTER" spacing="20.0" style="-fx-background-color: lightblue; -fx-font-family: sans-serif; -fx-font-size: 14; -fx-font-weight: bold;" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="yh.fabulousstars.hangman.GameController">
-    <padding>
-        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
-    </padding>
+
     <CanvasClass fx:id="canvas" VBox.vgrow="ALWAYS"/>
 
    <HBox VBox.vgrow="NEVER">
       <children>
          <GridPane hgap="3.0" HBox.hgrow="ALWAYS">
-             <TextField fx:id="guessField" HBox.hgrow="ALWAYS" onAction="#onEnterPressed" promptText="Enter your guess here" GridPane.columnIndex="1" />
-             <TextField fx:id="playerWord" HBox.hgrow="ALWAYS" onAction="#selectedWord" promptText="Enter your word here" GridPane.columnIndex="2" />
+             <TextField fx:id="guessField" HBox.hgrow="ALWAYS" onAction="#onEnterPressed" promptText="Enter a letter here" GridPane.columnIndex="1" />
 
             <children>
                 <Button fx:id="createButton" maxHeight="1.7976931348623157E308" onAction="#onCreateButtonClick" text="Create Game" GridPane.columnSpan="2" GridPane.halignment="CENTER" GridPane.hgrow="ALWAYS" GridPane.rowIndex="4" GridPane.vgrow="NEVER">
