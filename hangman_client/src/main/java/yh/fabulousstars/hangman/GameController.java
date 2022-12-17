@@ -15,9 +15,16 @@ import yh.fabulousstars.hangman.client.GameClient;
 import yh.fabulousstars.hangman.gui.GameStage;
 
 import java.net.URL;
+import java.util.Arrays;
 import java.util.ResourceBundle;
+import java.util.Scanner;
 
 public class GameController implements Initializable {
+    char[] correctLetter = new char[wordCount];
+    char[] wrongLetter = new char[12];
+
+
+
     enum UISection {
         Connect,
         Create,
@@ -97,7 +104,7 @@ public class GameController implements Initializable {
                 joinPasswordField.setDisable(!enabled);
                 createButton.setDisable(!enabled);
             } else if (section.equals(UISection.Join)) {
-                gameListView.setDisable(!enabled);
+                //gameListView.setDisable(!enabled);
                 joinButton.setDisable(!enabled);
             }
         }
@@ -115,6 +122,7 @@ public class GameController implements Initializable {
             gameManager.join(gameRef.gameId(), password);
         }
     }
+
 
     /**
      * Initialize game controller.
@@ -161,6 +169,9 @@ public class GameController implements Initializable {
         lobbyChat.setItems(chatList);
 
         System.out.println("Initialized");
+        for (int index = 0; index < wordCount; index++) {
+            correctLetter[index] = '*';
+        }
         //Keeps the canvas size updated
 
         setUIState(false, UISection.Join, UISection.Create);
@@ -186,7 +197,7 @@ public class GameController implements Initializable {
         } else if (event instanceof PlayerLeft) {
             gameWindow.handlePlayerLeft((PlayerLeft)event);
         } else if (event instanceof PlayerState) {
-            gameWindow.handlePlayerState((PlayerState)event);
+            gameWindow.handlePlayerState(((PlayerState)event).getState());
         } else if (event instanceof GameCreate) {
             var evt = (GameCreate)event;
             if(evt.getError()==null) {
