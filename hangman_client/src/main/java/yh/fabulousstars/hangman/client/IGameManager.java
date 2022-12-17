@@ -9,6 +9,12 @@ public interface IGameManager {
     void listGames();
 
     /**
+     * Join player to game.
+     * @param password
+     */
+    void join(String gameId, String password);
+
+    /**
      * Get game interface for current game.
      * @return IGame
      */

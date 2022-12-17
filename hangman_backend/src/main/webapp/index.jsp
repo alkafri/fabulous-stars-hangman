@@ -1,20 +1,7 @@
-<%@ page import="yh.fabulousstars.server.models.*" %>
+<%@ page import="yh.fabulousstars.server.BaseServlet" %>
 <%@ page import="java.util.Iterator" %>
 <%@ page import="com.google.appengine.api.datastore.*" %>
-
-<!--
-Copyright 2019 Google LLC
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-      http://www.apache.org/licenses/LICENSE-2.0
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
--->
-
+<%@ page import="java.util.List" %>
 
 <!DOCTYPE html>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
@@ -29,21 +16,26 @@ limitations under the License.
 <body>
 
 <h1>Fabulous Backend</h1>
-<h2>Running games:</h2>
 <%
     DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-    Query query = new Query("Game");
-    query.addSort("expires");
-    Iterator<Entity> games = datastore.prepare(query).asIterator();
-    while(games.hasNext()) {
-        Entity game = games.next();
+    var fetchOptions = FetchOptions.Builder.withDefaults();
+    List<Entity> games = datastore.prepare(new Query(BaseServlet.PLAYER_TYPE)).asList(fetchOptions);
+    List<Entity> players = datastore.prepare(new Query(BaseServlet.GAME_TYPE)).asList(fetchOptions);
 %>
-<p><%
-        game.getProperty("name");
-%></p>
-<%
-    }
-%>
+<hr />
+<h2>Game instances:</h2>
+<ul>
+<%  for(var game : games) { %>
+    <li><% game.getProperty("name"); %></li>
+<%  } %>
+</ul>
+<hr />
+<h2>Server players:</h2>
+<ul>
+<%  for(var player : players) { %>
+    <li><% player.getProperty("name"); %></li>
+    <%  } %>
+</ul>
 
 </body>
 </html>

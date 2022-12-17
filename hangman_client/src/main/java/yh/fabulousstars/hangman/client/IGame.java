@@ -23,11 +23,5 @@ public interface IGame {
      */
     String getName();
 
-    /**
-     * Join player to game.
-     * @param password
-     */
-    void join(String password);
-
     void leave();
 }

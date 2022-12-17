@@ -14,8 +14,8 @@ import java.io.*;
 import java.util.*;
 
 public abstract class BaseServlet extends HttpServlet {
-    protected static final String PLAYER_TYPE = "Player";
-    protected static final String GAME_TYPE = "Game";
+    public static final String PLAYER_TYPE = "Player";
+    public static final String GAME_TYPE = "Game";
     protected static final String GAME_STATE_TYPE = "GameState";
     protected static final String EVENT_TYPE = "Event";
     protected final DatastoreService datastore; // google datastore service api

@@ -282,6 +282,7 @@ public class GameServlet extends BaseServlet {
             var entity = iter.next(); // get datastore entity
             var game = Map.of(
                     "name", entity.getProperty("name").toString(),
+                    "protected", entity.getProperty("password") != null ? "1" : "0",
                     "gameId", entity.getKey().getName()
             );
             games.add(game);
@@ -325,13 +326,22 @@ public class GameServlet extends BaseServlet {
     }
 
     /**
-     * List players.
+     * List server players or just in-game players if client is in-game.
      * @param ctx
      * @return list of players
      */
     private void listPlayers(RequestContext ctx, boolean broadcast) {
         var players = new LinkedList<Map<String, String>>();
-        var iter = datastore.prepare(new Query(PLAYER_TYPE)).asIterator();
+        var playerEntity = getEntity(PLAYER_TYPE, ctx.session());
+        // get game id
+        String gameId = playerEntity.getProperty("gameId") != null ?
+                playerEntity.getProperty("gameId").toString() : null;
+        var query = new Query(PLAYER_TYPE);
+        // if in game, only list game players
+        if(gameId!=null) {
+            query.setFilter(new Query.FilterPredicate("gameId", Query.FilterOperator.EQUAL , gameId));
+        }
+        var iter = datastore.prepare(query).asIterator();
         while (iter.hasNext()) {
             var entity = iter.next(); // get datastore entity
             var player = Map.of(
@@ -340,7 +350,10 @@ public class GameServlet extends BaseServlet {
             );
             players.add(player);
         }
-        var data = Map.of("type", "player_list", "json", gson.toJson(players));
+        var data = Map.of(
+                "type", "player_list",
+                "json", gson.toJson(players),
+                "inGame", gameId!=null? "1" : "0");
         if(broadcast) {
             // broadcast pollable event
             for (var id : getAllIds(PLAYER_TYPE)) {

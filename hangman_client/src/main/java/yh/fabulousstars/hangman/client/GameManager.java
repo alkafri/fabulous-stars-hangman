@@ -257,6 +257,7 @@ class GameManager implements IGameManager {
      */
     private IGameEvent getPlayerList(Map<String, String> serverEvent) {
         List<Map<String,String>> mapList = fromJson(serverEvent.get("json"));
+        boolean inGame = serverEvent.get("inGame").equals("1");
         List<PlayerList.Player> players = new ArrayList<>();
         for (var map : mapList) {
             players.add(new PlayerList.Player(
@@ -264,7 +265,7 @@ class GameManager implements IGameManager {
                     map.get("name")
             ));
         }
-        return new PlayerList(players);
+        return new PlayerList(players, inGame);
     }
 
     /**
@@ -278,7 +279,8 @@ class GameManager implements IGameManager {
         for (var map : mapList) {
             games.add(new GameList.Game(
                     map.get("gameId"),
-                    map.get("name")
+                    map.get("name"),
+                    map.get("protected").equals("1")
             ));
         }
         return new GameList(games);

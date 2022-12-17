@@ -106,10 +106,13 @@ public class GameController implements Initializable {
     @FXML
     public void onJoinButtonClick(ActionEvent event) {
         var gameRef = gameListView.getSelectionModel().getSelectedItem();
+        String password = null;
+        if(gameRef.hasPassword()) {
+            password = prompt
+        }
         if(showMessage("Join game '"+gameRef.name()+"'?", Alert.AlertType.CONFIRMATION)) {
             setUIState(false, UISection.Join, UISection.Connect, UISection.Create);
-            var game = gameManager.getGame(game.gameId());
-            game.
+            gameManager.join(gameRef.gameId(), password);
         }
     }
 
@@ -176,36 +179,45 @@ public class GameController implements Initializable {
                 setUIState(true, UISection.Join, UISection.Create);
             } else {
                 setUIState(false, UISection.Connect, UISection.Join, UISection.Create);
-                new GameStage(evt.getGame());
+                gameWindow = new GameStage(evt.getGame());
             }
         } else if (event instanceof PlayerJoined) {
-
+            gameWindow.handlePlayerJoined((PlayerJoined)event);
+        } else if (event instanceof PlayerLeft) {
+            gameWindow.handlePlayerLeft((PlayerLeft)event);
         } else if (event instanceof PlayerState) {
-
+            gameWindow.handlePlayerState((PlayerState)event);
         } else if (event instanceof GameCreate) {
-
-        } else if (event instanceof CreateFailed) {
-
-        } else if (event instanceof FailedToJoin) {
-
-        } else if (event instanceof JoinGame) {
-
+            var evt = (GameCreate)event;
+            if(evt.getError()==null) {
+                showMessage(evt.getError(), Alert.AlertType.ERROR);
+                setUIState(true, UISection.Join, UISection.Create);
+            } else {
+                setUIState(false, UISection.Connect, UISection.Join, UISection.Create);
+                gameWindow = new GameStage(evt.getGame());
+            }
         } else if (event instanceof LeaveGame) {
-
+            gameWindow.close();
+            gameWindow = null;
+            setUIState(true, UISection.Join, UISection.Create);
         } else if (event instanceof GameStarted) {
-
+            gameWindow.handleGameStarted((GameStarted)event);
         } else if (event instanceof SubmitWord) {
-
+            gameWindow.handleSubmitWord((SubmitWord)event);
         } else if (event instanceof SubmitGuess) {
-
+            gameWindow.handleSubmitGuess((SubmitGuess)event);
         } else if (event instanceof GameList) {
             var evt = (GameList)event;
             gameList.clear();
             gameList.addAll(evt.getGameList());
         } else if (event instanceof PlayerList) {
             var evt = (PlayerList)event;
-            playerList.clear();
-            playerList.addAll(evt.getPlayerList());
+            if(evt.isInGame()) {
+                gameWindow.handlePlayerList((PlayerList)event);
+            } else {
+                playerList.clear();
+                playerList.addAll(evt.getPlayerList());
+            }
         } else if (event instanceof ClientConnect) {
             var evt = (ClientConnect)event;
             var err = evt.getError();
@@ -219,7 +231,7 @@ public class GameController implements Initializable {
         } else if (event instanceof ChatMessage) {
             var evt = (ChatMessage)event;
             if(evt.isInGame()) {
-                //TODO: in ngame msg
+                gameWindow.handleChatMessage((ChatMessage)event);
             } else {
                 chatList.add(0, evt.getMessage());
             }
@@ -231,5 +243,12 @@ public class GameController implements Initializable {
          alertWindow.setContentText(message);
          var res = alertWindow.showAndWait();
          return res.get().equals(ButtonType.OK);
+    }
+    public static String showMessage(String prompt) {
+        Alert alertWindow = new Alert(type);
+        alertWindow.setTitle(type.toString());
+        alertWindow.setContentText(message);
+        var res = alertWindow.showAndWait();
+        return res.get().equals(ButtonType.OK);
     }
 }
