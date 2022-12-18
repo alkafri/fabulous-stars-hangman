@@ -10,20 +10,16 @@ import javafx.util.Callback;
 import yh.fabulousstars.hangman.client.GameManagerFactory;
 import yh.fabulousstars.hangman.client.IGameEvent;
 import yh.fabulousstars.hangman.client.IGameManager;
+import yh.fabulousstars.hangman.client.IPlayer;
 import yh.fabulousstars.hangman.client.events.*;
 import yh.fabulousstars.hangman.client.GameClient;
+import yh.fabulousstars.hangman.gui.DialogHelper;
 import yh.fabulousstars.hangman.gui.GameStage;
 
 import java.net.URL;
-import java.util.Arrays;
 import java.util.ResourceBundle;
-import java.util.Scanner;
 
 public class GameController implements Initializable {
-    char[] correctLetter = new char[wordCount];
-    char[] wrongLetter = new char[12];
-
-
 
     enum UISection {
         Connect,
@@ -45,12 +41,12 @@ public class GameController implements Initializable {
     @FXML
     public ListView<GameList.Game> gameListView;
     @FXML
-    public ListView<PlayerList.Player> playerListView;
+    public ListView<IPlayer> playerListView;
     @FXML
     public Button joinButton;
     private final IGameManager gameManager;
     private final ObservableList<GameList.Game> gameList;
-    private final ObservableList<PlayerList.Player> playerList;
+    private final ObservableList<IPlayer> playerList;
     private final ObservableList<String> chatList;
     private GameStage gameWindow;
 
@@ -78,7 +74,7 @@ public class GameController implements Initializable {
             gameManager.createGame(name, password);
         } else {
             //Show error
-            showMessage("Game & Player Name is required", Alert.AlertType.ERROR);
+            DialogHelper.showMessage("Game & Player Name is required", Alert.AlertType.ERROR);
         }
     }
 
@@ -115,9 +111,10 @@ public class GameController implements Initializable {
         var gameRef = gameListView.getSelectionModel().getSelectedItem();
         String password = null;
         if(gameRef.hasPassword()) {
-            password = prompt
+            password = DialogHelper.promptString("Insert password.");
+            if(password == null) return;
         }
-        if(showMessage("Join game '"+gameRef.name()+"'?", Alert.AlertType.CONFIRMATION)) {
+        if(DialogHelper.showMessage("Join game '"+gameRef.name()+"'?", Alert.AlertType.CONFIRMATION)) {
             setUIState(false, UISection.Join, UISection.Connect, UISection.Create);
             gameManager.join(gameRef.gameId(), password);
         }
@@ -152,15 +149,16 @@ public class GameController implements Initializable {
         });
         gameListView.setItems(gameList);
 
+        // for showing name in listvbiew
         playerListView.setCellFactory(new Callback<>() {
             @Override
-            public ListCell<PlayerList.Player> call(ListView<PlayerList.Player> playerListView) {
+            public ListCell<IPlayer> call(ListView<IPlayer> playerListView) {
                 return new ListCell<>() {
                     @Override
-                    protected void updateItem(PlayerList.Player player, boolean b) {
+                    protected void updateItem(IPlayer player, boolean b) {
                         super.updateItem(player, b);
                         if(player==null) { setText(""); }
-                        else { setText(player.name()); }
+                        else { setText(player.getName()); }
                     }
                 };
             }
@@ -168,10 +166,6 @@ public class GameController implements Initializable {
         playerListView.setItems(playerList);
         lobbyChat.setItems(chatList);
 
-        System.out.println("Initialized");
-        for (int index = 0; index < wordCount; index++) {
-            correctLetter[index] = '*';
-        }
         //Keeps the canvas size updated
 
         setUIState(false, UISection.Join, UISection.Create);
@@ -183,10 +177,10 @@ public class GameController implements Initializable {
     }
 
     private void handleGameEvent(IGameEvent event) {
-        if(event instanceof JoinGame) {
-            var evt = (JoinGame)event;
+        if(event instanceof JoinOrCreate) {
+            var evt = (JoinOrCreate)event;
             if(evt.getError()==null) {
-                showMessage(evt.getError(), Alert.AlertType.ERROR);
+                DialogHelper.showMessage(evt.getError(), Alert.AlertType.ERROR);
                 setUIState(true, UISection.Join, UISection.Create);
             } else {
                 setUIState(false, UISection.Connect, UISection.Join, UISection.Create);
@@ -197,25 +191,18 @@ public class GameController implements Initializable {
         } else if (event instanceof PlayerLeft) {
             gameWindow.handlePlayerLeft((PlayerLeft)event);
         } else if (event instanceof PlayerState) {
-            gameWindow.handlePlayerState(((PlayerState)event).getState());
-        } else if (event instanceof GameCreate) {
-            var evt = (GameCreate)event;
-            if(evt.getError()==null) {
-                showMessage(evt.getError(), Alert.AlertType.ERROR);
-                setUIState(true, UISection.Join, UISection.Create);
-            } else {
-                setUIState(false, UISection.Connect, UISection.Join, UISection.Create);
-                gameWindow = new GameStage(evt.getGame());
-            }
+            gameWindow.handlePlayerState((PlayerState)event);
         } else if (event instanceof LeaveGame) {
             gameWindow.close();
             gameWindow = null;
             setUIState(true, UISection.Join, UISection.Create);
         } else if (event instanceof GameStarted) {
             gameWindow.handleGameStarted((GameStarted)event);
-        } else if (event instanceof SubmitWord) {
-            gameWindow.handleSubmitWord((SubmitWord)event);
-        } else if (event instanceof SubmitGuess) {
+        } else if (event instanceof RequestWord) {
+            gameWindow.handleRequestWord((RequestWord)event);
+        } else if (event instanceof RequestGuess) {
+            gameWindow.handleRequestGuess((RequestGuess)event);
+        }  else if (event instanceof SubmitGuess) {
             gameWindow.handleSubmitGuess((SubmitGuess)event);
         } else if (event instanceof GameList) {
             var evt = (GameList)event;
@@ -233,7 +220,7 @@ public class GameController implements Initializable {
             var evt = (ClientConnect)event;
             var err = evt.getError();
             if(err != null) {
-                showMessage(err, Alert.AlertType.ERROR);
+                DialogHelper.showMessage(err, Alert.AlertType.ERROR);
                 setUIState(true, UISection.Connect);
             } else {
                 setUIState(false, UISection.Connect);
@@ -247,19 +234,5 @@ public class GameController implements Initializable {
                 chatList.add(0, evt.getMessage());
             }
         }
-    }
-     public static boolean showMessage(String message, Alert.AlertType type) {
-         Alert alertWindow = new Alert(type);
-         alertWindow.setTitle(type.toString());
-         alertWindow.setContentText(message);
-         var res = alertWindow.showAndWait();
-         return res.get().equals(ButtonType.OK);
-    }
-    public static String showMessage(String prompt) {
-        Alert alertWindow = new Alert(type);
-        alertWindow.setTitle(type.toString());
-        alertWindow.setContentText(message);
-        var res = alertWindow.showAndWait();
-        return res.get().equals(ButtonType.OK);
     }
 }

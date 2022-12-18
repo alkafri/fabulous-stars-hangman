@@ -24,17 +24,17 @@ public interface IPlayer {
      * Get player state.
      * @return PlayetState
      */
-    PlayerState getState();
+    PlayState getPlayState();
 
     /**
-     * Get player damage.
-     * @return 0 to MAX_DAMAGE
-     */
-    int getDamage();
-
-    /**
-     * Perform a submit.
+     * Submit player word.
      * @param value
      */
-    void submit(String value);
+    void submitWord(String value);
+
+    /**
+     * Submit player guess.
+     * @param value
+     */
+    void submitGuess(String value);
 }

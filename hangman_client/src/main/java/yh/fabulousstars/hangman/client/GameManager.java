@@ -167,6 +167,12 @@ class GameManager implements IGameManager {
         }
     }
 
+    void start() {
+        if(currentGame != null) {
+            request(String.format("start?game=%s", currentGame.getId()),null);
+        }
+    }
+
     /**
      * Leave game.
      */
@@ -175,12 +181,19 @@ class GameManager implements IGameManager {
     }
 
     /**
-     * Submit input to game.
-     * @param client
+     * Submit a word.
      * @param value
      */
-    public void submit(String client, String value) {
-        //TODO: submit
+    public void submitWord(String value) {
+        request(String.format("word?str=%s", value),null);
+    }
+
+    /**
+     * Submit a guess.
+     * @param value
+     */
+    public void submitGuess(String value) {
+        request(String.format("guess?str=%s", value),null);
     }
 
     /**
@@ -198,12 +211,16 @@ class GameManager implements IGameManager {
     void sendEvent(Map<String,String> serverEvent) {
         IGameEvent gameEvent = switch (serverEvent.get("type")) {
             case "connected", "connect_error" -> getClientConnect(serverEvent);
-            case "created", "create_error" -> getGameCreate(serverEvent);
+            case "created", "create_error" -> getCreateOrJoin(serverEvent);
             case "game_list" -> getGameList(serverEvent);
             case "player_list" -> getPlayerList(serverEvent);
-            case "join" -> getJoinGame(serverEvent);
+            case "join", "join_error" -> getCreateOrJoin(serverEvent);
             case "leave" -> getLeaveGame(serverEvent);
             case "message" -> getChatMessage(serverEvent);
+            case "play_state" -> getPlayerState(serverEvent);
+            case "submit_guess" -> getSubmitGuess(serverEvent);
+            case "request_word" -> getRequestWord(serverEvent);
+            case "request_guess" -> getRequestGuess(serverEvent);
             default -> null;
         };
         if(gameEvent != null) {
@@ -212,9 +229,53 @@ class GameManager implements IGameManager {
     }
 
     /**
+     * Build a SubmitGuess event from serverEvent.
+     * @param serverEvent
+     * @return SubmitGuess
+     */
+    private IGameEvent getSubmitGuess(Map<String, String> serverEvent) {
+        return new SubmitGuess(
+                serverEvent.get("correct").equals("1"),
+                serverEvent.get("guess"));
+    }
+
+    /**
+     * Build a RequestWord event from serverEvent.
+     * @param serverEvent
+     * @return RequestWord
+     */
+    private IGameEvent getRequestWord(Map<String, String> serverEvent) {
+        return new RequestWord(
+                Integer.parseInt(serverEvent.get("minLength")),
+                Integer.parseInt(serverEvent.get("maxLength"))
+        );
+    }
+
+    /**
+     * Build a RequestGuess event from serverEvent.
+     * @param serverEvent
+     * @return RequestGuess
+     */
+    private IGameEvent getRequestGuess(Map<String, String> serverEvent) {
+        return new RequestGuess();
+    }
+
+    /**
+     * Build a PlayerState event from serverEvent.
+     * @param serverEvent
+     * @return PlayerState
+     */
+    private IGameEvent getPlayerState(Map<String, String> serverEvent) {
+        PlayState playState = fromJson(serverEvent.get("json")); // check
+        var player = (LocalPlayer)currentGame.getPlayer(playState.getClientId());
+        player.setPlayState(playState);
+        return new PlayerState(playState.getClientId(), playState);
+    }
+
+    /**
      * Build a ChatMessage event from serverEvent.
      * @param serverEvent
-     * @return
+     * @return ChatMessage
      */
     private IGameEvent getChatMessage(Map<String, String> serverEvent) {
         var inGame = serverEvent.get("inGame").equals("1");
@@ -238,15 +299,15 @@ class GameManager implements IGameManager {
      * @param serverEvent
      * @return JoinGame
      */
-    private IGameEvent getJoinGame(Map<String, String> serverEvent) {
+    private IGameEvent getCreateOrJoin(Map<String, String> serverEvent) {
         if(serverEvent.containsKey("error")) {
-            return new JoinGame(null, serverEvent.get("error"));
+            return new JoinOrCreate(null, serverEvent.get("error"));
         } else {
-            Map<String,String> gameMap = fromJson(serverEvent.get("json"));
             currentGame = new LocalGame(this,
-                    gameMap.get("gameId"),
-                    gameMap.get("name"));
-            return new JoinGame(currentGame, null);
+                    serverEvent.get("gameId"),
+                    serverEvent.get("name"));
+            player.setGame(currentGame);
+            return new JoinOrCreate(currentGame, null);
         }
     }
 
@@ -257,15 +318,20 @@ class GameManager implements IGameManager {
      */
     private IGameEvent getPlayerList(Map<String, String> serverEvent) {
         List<Map<String,String>> mapList = fromJson(serverEvent.get("json"));
-        boolean inGame = serverEvent.get("inGame").equals("1");
-        List<PlayerList.Player> players = new ArrayList<>();
-        for (var map : mapList) {
-            players.add(new PlayerList.Player(
-                    map.get("clientId"),
-                    map.get("name")
-            ));
+        var gameId = serverEvent.get("gameId");
+        List<IPlayer> players = new ArrayList<>();
+        if(currentGame!=null && !currentGame.getId().equals(gameId)) { // this should never happen
+            throw new RuntimeException("Incorrect game id!");
         }
-        return new PlayerList(players, inGame);
+        for (var map : mapList) {
+            var player = new LocalPlayer(
+                    currentGame,
+                    map.get("name"),
+                    map.get("clientId")
+            );
+            players.add(player);
+        }
+        return new PlayerList(players, gameId!=null);
     }
 
     /**
@@ -287,23 +353,6 @@ class GameManager implements IGameManager {
     }
 
     /**
-     * Build a GameCreate event from serverEvent.
-     *
-     * @param serverEvent
-     * @return GameCreate
-     */
-    private IGameEvent getGameCreate(Map<String, String> serverEvent) {
-        if(serverEvent.containsKey("error")) {
-            return new GameCreate(null, serverEvent.get("error"));
-        } else {
-            currentGame = new LocalGame(this,
-                    serverEvent.get("gameId"),
-                    serverEvent.get("name"));
-            return new GameCreate(currentGame, null);
-        }
-    }
-
-    /**
      * Build a ClientConnect event from serverEvent.
      *
      * @param serverEvent
@@ -316,7 +365,7 @@ class GameManager implements IGameManager {
         else {
             var id = serverEvent.get("clientId");
             var name = serverEvent.get("name");
-            player = new LocalPlayer(name, id);
+            player = new LocalPlayer(null, name, id);
             return new ClientConnect(player,null);
         }
     }

@@ -5,16 +5,12 @@ class LocalPlayer implements IPlayer {
     private final String name;
 
     private LocalGame game;
-    private PlayerState state;
-    private int damage;
+    private PlayState playState;
 
-
-    LocalPlayer(String name, String clientId) {
+    LocalPlayer(LocalGame game, String name, String clientId) {
         this.clientId = clientId;
-        this.game = null;
+        this.game = game;
         this.name = name;
-        this.state = PlayerState.WaitForStart;
-        this.damage = 0;
     }
 
     @Override
@@ -33,19 +29,28 @@ class LocalPlayer implements IPlayer {
     }
 
     @Override
-    public PlayerState getState() {
-        return state;
+    public PlayState getPlayState() {
+        return playState;
     }
 
     @Override
-    public int getDamage() {
-        return damage;
-    }
-
-    @Override
-    public void submit(String value) {
+    public void submitWord(String value) {
         if(game != null) {
-            game.getClient().submit(clientId, value);
+            game.getClient().submitWord(value);
         }
+    }
+    @Override
+    public void submitGuess(String value) {
+        if(game != null) {
+            game.getClient().submitGuess(value);
+        }
+    }
+
+    void setGame(LocalGame game) {
+        game = game;
+    }
+
+    public void setPlayState(PlayState playState) {
+        this.playState = playState;
     }
 }

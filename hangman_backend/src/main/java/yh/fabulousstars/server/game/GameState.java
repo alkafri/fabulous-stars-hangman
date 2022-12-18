@@ -7,16 +7,19 @@ import java.util.*;
  * GameLogics methods operate on GameState instances.
  */
 public class GameState {
+    private boolean started;
     private HashMap<String,String> wordBucket;
-    private HashMap<String,PlayerState> players;
+    private HashMap<String, PlayState> players;
 
     public GameState() {
         this.wordBucket = new HashMap<>();
         this.players = new HashMap<>();
+        this.started = false;
     }
 
-    void setWord(String clientId, String word) {
-        wordBucket.put(clientId, word);
+    void setPlayerWord(String clientId, String word) {
+
+        wordBucket.put(clientId, word.toUpperCase());
     }
 
     /**
@@ -24,36 +27,56 @@ public class GameState {
      */
     void chooseWords() {
         // map of clientId -> word
-        var wordKeys = new ArrayList<>(wordBucket.keySet());
-        Collections.shuffle(wordKeys); // shuffle key order
+        var opponentIds = new ArrayList<>(wordBucket.keySet());
+        Collections.shuffle(opponentIds); // shuffle word order
         // choose word for each player
         for (var player : getPlayers()) {
             // get first word not belonging to player
-            for (int i = 0; i < wordKeys.size(); i++) {
-                var wordKey = wordKeys.get(i);
-                if(!wordKey.equals(player.getKey())) {
-                    player.getValue().setCurrentWord(wordBucket.get(wordKey));
-                    wordKeys.remove(wordKey);
+            for (int i = 0; i < opponentIds.size(); i++) {
+                var opponentId = opponentIds.get(i);
+                if(!opponentId.equals(player.getClientId())) {
+                    // set word
+                    player.setCurrentWord(opponentId, wordBucket.get(opponentId));
+                    // remove used word from bucket
+                    opponentIds.remove(opponentId);
                     break;
                 }
             }
         }
-        wordBucket.keySet();
     }
 
     void removeWord(String clientId) {
         wordBucket.remove(clientId);
     }
 
-    public Set<Map.Entry<String, PlayerState>> getPlayers() {
-        return players.entrySet();
+    public List<PlayState> getPlayers() {
+        return players.values().stream().toList();
+    }
+    public PlayState getPlayState(String clientId) {
+        return players.get(clientId);
     }
 
     public void addPlayer(String clientId) {
-        players.put(clientId, new PlayerState());
+        players.put(clientId, new PlayState(clientId));
     }
 
     public void removePlayer(String clientId) {
         players.remove(clientId);
+    }
+
+    public void setStarted(boolean started) {
+        this.started = started;
+    }
+
+    public boolean getStarted() {
+        return started;
+    }
+
+    /**
+     * Bucket is filled with words.
+     * @return
+     */
+    public boolean hasWords() {
+        return players.size()==wordBucket.size();
     }
 }

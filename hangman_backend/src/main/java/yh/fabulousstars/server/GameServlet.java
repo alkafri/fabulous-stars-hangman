@@ -36,6 +36,21 @@ public class GameServlet extends BaseServlet {
             case "message" -> message(ctx);
             case "listgames" -> listGames(ctx, false);
             case "listplayers" -> listPlayers(ctx, false);
+            case "start" -> startGame(ctx);
+        }
+    }
+
+    private void startGame(RequestContext ctx) {
+        var gameId = ctx.req().getParameter("game");
+        if(gameId != null) {
+            var gameState = getGameState(gameId);
+            if(gameState!=null) {
+                gameState.setStarted(true);
+                var players = gameState.getPlayers();
+                for(var player : players) {
+                    //todo: request word
+                }
+            }
         }
     }
 
@@ -194,11 +209,9 @@ public class GameServlet extends BaseServlet {
                     playerEntity.setProperty("gameId", gameId);
                     datastore.put(playerEntity);
                     // send join event
-                    var gameMap= getStringProperties(gameEntity);
-                    gameMap.put("gameId", gameId);
-                    addEvent(clientId, "join", Map.of(
-                        "json", gson.toJson(gameMap)
-                    ));
+                    var game= getStringProperties(gameEntity);
+                    game.put("gameId", gameId);
+                    addEvent(clientId, "join", game);
                     // broadcast list of games
                     listGames(ctx,true); // broadcast game list
                     listGamePlayers(ctx, gameId, "player_list");
@@ -225,10 +238,15 @@ public class GameServlet extends BaseServlet {
         var playerEntity = getEntity(PLAYER_TYPE, clientId);
         if(playerEntity!=null) {
             var gameId = playerEntity.getProperty("gameId").toString();
-            var state = getGameState(gameId); // get state
-            GameLogics.makeGuess(state, clientId, guess); // play
-            putGameState(gameId, state); // store state
-            // todo: make guess should return events to send
+            var gameState = getGameState(gameId); // get state
+            var playerStates = GameLogics.makeGuess(gameState, clientId, guess); // play
+            putGameState(gameId, gameState); // store state
+
+            for (var state : playerStates) {
+                addEvent(state.getClientId(), "play_state",
+                        Map.of("json", gson.toJson(state))
+                        );
+            }
         }
     }
 
@@ -244,7 +262,7 @@ public class GameServlet extends BaseServlet {
         if(playerEntity!=null) {
             var gameId = playerEntity.getProperty("gameId").toString();
             var state = getGameState(gameId); // get state
-            GameLogics.setWord(state, clientId, word); // play
+            var playerStates = GameLogics.setWord(state, clientId, word); // play
             putGameState(gameId, state); // store state
             // todo: set word should return events to send
         }
@@ -300,6 +318,47 @@ public class GameServlet extends BaseServlet {
     }
 
     /**
+     * List server players or just in-game players if client is in-game.
+     * @param ctx
+     * @return list of players
+     */
+    private void listPlayers(RequestContext ctx, boolean broadcast) {
+        var players = new LinkedList<Map<String, String>>();
+        var playerEntity = getEntity(PLAYER_TYPE, ctx.session());
+        // get game id
+        String gameId = playerEntity.getProperty("gameId") != null ?
+                playerEntity.getProperty("gameId").toString() : null;
+        var query = new Query(PLAYER_TYPE);
+        // if in game, only list game players
+        if(gameId!=null) {
+            query.setFilter(new Query.FilterPredicate("gameId", Query.FilterOperator.EQUAL , gameId));
+        }
+        var iter = datastore.prepare(query).asIterator();
+        while (iter.hasNext()) {
+            var entity = iter.next(); // get datastore entity
+            var player = Map.of(
+                    "name", entity.getProperty("name").toString(),
+                    "clientId", entity.getKey().getName(),
+                    "gameId", entity.getProperty("gameId").toString()
+            );
+            players.add(player);
+        }
+        var data = Map.of(
+                "type", "player_list",
+                "json", gson.toJson(players),
+                "gameId", gameId);
+        if(broadcast) {
+            // broadcast pollable event
+            for (var id : getAllIds(PLAYER_TYPE)) {
+                addEvent(id, "player_list", data);
+            }
+        } else {
+            // create pollable event for caller
+            addEvent(ctx.session(), "player_list", data);
+        }
+    }
+
+    /**
      * Check that name is at least 2 characters and doesn't exist.
      *
      * @param name name to check
@@ -323,46 +382,6 @@ public class GameServlet extends BaseServlet {
             }
         }
         return null;
-    }
-
-    /**
-     * List server players or just in-game players if client is in-game.
-     * @param ctx
-     * @return list of players
-     */
-    private void listPlayers(RequestContext ctx, boolean broadcast) {
-        var players = new LinkedList<Map<String, String>>();
-        var playerEntity = getEntity(PLAYER_TYPE, ctx.session());
-        // get game id
-        String gameId = playerEntity.getProperty("gameId") != null ?
-                playerEntity.getProperty("gameId").toString() : null;
-        var query = new Query(PLAYER_TYPE);
-        // if in game, only list game players
-        if(gameId!=null) {
-            query.setFilter(new Query.FilterPredicate("gameId", Query.FilterOperator.EQUAL , gameId));
-        }
-        var iter = datastore.prepare(query).asIterator();
-        while (iter.hasNext()) {
-            var entity = iter.next(); // get datastore entity
-            var player = Map.of(
-                    "name", entity.getProperty("name").toString(),
-                    "clientId", entity.getKey().getName()
-            );
-            players.add(player);
-        }
-        var data = Map.of(
-                "type", "player_list",
-                "json", gson.toJson(players),
-                "inGame", gameId!=null? "1" : "0");
-        if(broadcast) {
-            // broadcast pollable event
-            for (var id : getAllIds(PLAYER_TYPE)) {
-                addEvent(id, "player_list", data);
-            }
-        } else {
-            // create pollable event for caller
-            addEvent(ctx.session(), "player_list", data);
-        }
     }
 
     /**

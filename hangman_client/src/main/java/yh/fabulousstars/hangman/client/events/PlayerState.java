@@ -1,16 +1,22 @@
 package yh.fabulousstars.hangman.client.events;
 
-public class PlayerState extends AbstractEvent {
-    public record State(
-            String clientId
-    ) {}
-    private State state;
+import yh.fabulousstars.hangman.client.PlayState;
 
-    public PlayerState(State state) {
+public class PlayerState extends AbstractEvent {
+    private String clientId;
+    private PlayState state;
+
+    public PlayerState(String clientId, PlayState state) {
+
+        this.clientId = clientId;
         this.state = state;
     }
 
-    public State getState() {
+    public PlayState getState() {
         return state;
+    }
+
+    public String getClientId() {
+        return clientId;
     }
 }
