@@ -1,8 +1,6 @@
 package yh.fabulousstars.hangman.server;
 
 import com.google.appengine.api.datastore.*;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import yh.fabulousstars.hangman.game.EventObject;
 import yh.fabulousstars.hangman.game.GameState;
 import yh.fabulousstars.hangman.server.utils.EntityUtils;
@@ -20,7 +18,6 @@ public abstract class BaseServlet extends HttpServlet {
     protected static final String GAME_STATE_TYPE = "GameState";
     protected static final String EVENT_TYPE = "Event";
     protected final DatastoreService datastore; // google datastore service api
-    protected final Gson gson; // google json serializer
     /**
      * List of endpoints to respond to.
      */
@@ -33,28 +30,7 @@ public abstract class BaseServlet extends HttpServlet {
     protected BaseServlet(Collection<String> endpoints) {
         super();
         this.datastore = DatastoreServiceFactory.getDatastoreService();
-        this.gson = new GsonBuilder()
-                .serializeNulls()
-                .create();
         this.endpoints = new ArrayList<>(endpoints);
-    }
-
-    /**
-     * Return valid endpoint and set content type to json.
-     *
-     * @param req
-     * @param resp
-     * @return endpoint
-     * @throws IOException
-     */
-    private RequestContext setup(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        var session = req.getSession();
-        var path = req.getPathInfo();
-        var endpoint = path != null ? req.getPathInfo().substring(1) : "";
-        if (endpoints.contains(endpoint)) {
-            return new RequestContext(endpoint, session.getId(), req, resp);
-        }
-        throw new FileNotFoundException(endpoint);
     }
 
     /**
@@ -67,43 +43,13 @@ public abstract class BaseServlet extends HttpServlet {
     @Override
     public void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
-        handleRequest(setup(req, resp));
-    }
-
-    /**
-     * Handle PUT
-     * @param req
-     * @param resp
-     * @throws ServletException
-     * @throws IOException
-     */
-    @Override
-    public void doPut(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException, IOException {
-        handleRequest(setup(req, resp));
-    }
-
-    /**
-     * Send object as json.
-     *
-     * @param ctx
-     * @param obj
-     * @throws IOException
-     */
-    protected void objectToJsonStream(RequestContext ctx, Object obj) throws IOException {
-        gson.toJson(obj, obj.getClass(), ctx.resp().getWriter());
-    }
-
-    /**
-     * Set entity properties from a source map.
-     *
-     * @param entity
-     * @param source
-     */
-    protected void setProperties(Entity entity, Map<String, String> source) {
-        for (var entry : source.entrySet()) {
-            entity.setProperty(entry.getKey(), entry.getValue());
+        var session = req.getSession();
+        var path = req.getPathInfo();
+        var endpoint = path != null ? req.getPathInfo().substring(1) : "";
+        if (endpoints.contains(endpoint)) {
+            handleRequest(new RequestContext(endpoint, session.getId(), req, resp));
         }
+        throw new FileNotFoundException(endpoint);
     }
 
     /**
@@ -208,9 +154,7 @@ public abstract class BaseServlet extends HttpServlet {
             datastore.delete(entity.getKey());
             ctx.resp().setContentType("application/octet-stream");
             var output = ctx.resp().getOutputStream();
-            ctx.resp().setContentLength(bytes.length);
             output.write(bytes);
-            output.flush();
         }
     }
 

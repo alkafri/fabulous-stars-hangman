@@ -1,15 +1,13 @@
 package yh.fabulousstars.hangman.client;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
 import javafx.application.Platform;
 import yh.fabulousstars.hangman.client.events.*;
 import yh.fabulousstars.hangman.game.EventObject;
 
-import java.io.ByteArrayInputStream;
-import java.io.ObjectInputStream;
-import java.net.*;
+import java.net.CookieManager;
+import java.net.CookiePolicy;
+import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;

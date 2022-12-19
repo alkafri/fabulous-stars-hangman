@@ -280,6 +280,10 @@ public class GameServlet extends BaseServlet {
         }
     }
 
+    /**
+     *
+     * @param ctx
+     */
     private void message(RequestContext ctx) {
         var clientId = ctx.session();
         // get params
@@ -294,7 +298,7 @@ public class GameServlet extends BaseServlet {
         event.put("inGame",  gameId==null ? "0" : "1");
         for (var participant : participants) {
             event.put("message", message);
-            addEvent(clientId, event);
+            addEvent(participant.getKey().getName(), event);
         }
     }
 
@@ -353,7 +357,8 @@ public class GameServlet extends BaseServlet {
             var player = Map.of(
                     "name", entity.getProperty("name").toString(),
                     "clientId", entity.getKey().getName(),
-                    "gameId", entity.getProperty("gameId").toString()
+                    "gameId", entity.hasProperty("gameId")
+                            ? entity.getProperty("gameId").toString() : null
             );
             players.add(player);
         }
