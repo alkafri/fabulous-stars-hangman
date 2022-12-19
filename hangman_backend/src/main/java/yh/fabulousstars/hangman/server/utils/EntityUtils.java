@@ -4,6 +4,8 @@ import com.google.appengine.api.datastore.Blob;
 import com.google.appengine.api.datastore.Entity;
 import yh.fabulousstars.hangman.utils.ObjectHelper;
 
+import java.util.UUID;
+
 public class EntityUtils {
 
 

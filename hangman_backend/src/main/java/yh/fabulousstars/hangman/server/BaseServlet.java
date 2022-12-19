@@ -41,7 +41,6 @@ public abstract class BaseServlet extends HttpServlet {
         var path = req.getPathInfo();
         if (path != null) {
             var endpoint = req.getPathInfo().substring(1);
-            System.out.println("Endpoint: " + endpoint);
             handleRequest(new RequestContext(endpoint, session.getId(), req, resp));
         } else {
             resp.sendRedirect("/");
@@ -87,10 +86,10 @@ public abstract class BaseServlet extends HttpServlet {
      * Gut stati into db.
      *
      * @param gameId
-     * @return
      */
     protected void putGameState(String gameId, GameState gameState) {
-        var entity = new Entity(GAME_STATE_TYPE, gameId);
+        var key = KeyFactory.createKey(GAME_STATE_TYPE, gameId);
+        var entity = new Entity(key);
         setExpiry(entity);
         EntityUtils.putBlobObject(entity, gameState);
         datastore.put(entity);
@@ -135,6 +134,7 @@ public abstract class BaseServlet extends HttpServlet {
         entity.setProperty("eCreated", System.currentTimeMillis());
         setExpiry(entity);
         EntityUtils.putBlobObject(entity, event);
+        System.out.println("ADD EVENT: " + event.getName());
         datastore.put(entity);
     }
 

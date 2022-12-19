@@ -164,7 +164,8 @@ public class GameServlet extends BaseServlet {
                     if (pass.equals("")) pass = null;
                 }
                 // create game meta
-                var entity = new Entity(GAME_TYPE);
+                // use client id as game id. This will also let us determine owner
+                var entity = new Entity(GAME_TYPE, ctx.session());
                 entity.setProperty("name", name);
                 entity.setProperty("password", pass);
                 entity.setProperty("owner", ctx.session());
@@ -173,6 +174,9 @@ public class GameServlet extends BaseServlet {
                 var state = new GameState();
                 state.addPlayer(ctx.session());
                 putGameState(key.getName(), state);
+                // update player game
+                player.setProperty("gameId", key.getName());
+                datastore.put(player);
                 // get game meta entity as map
                 var event = new EventObject("created");
                 event.put("gameId", key.getName());

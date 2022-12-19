@@ -179,7 +179,7 @@ public class GameController implements Initializable {
     private void handleGameEvent(IGameEvent event) {
         if (event instanceof JoinOrCreate) {
             var evt = (JoinOrCreate) event;
-            if (evt.getError() == null) {
+            if (evt.getError() != null) {
                 DialogHelper.showMessage(evt.getError(), Alert.AlertType.ERROR);
                 setUIState(true, UISection.Join, UISection.Create);
             } else {

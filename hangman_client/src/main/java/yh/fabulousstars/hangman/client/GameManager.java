@@ -98,9 +98,8 @@ class GameManager implements IGameManager {
      * Send GET or PUT request to server depending on if there is a body or not.
      *
      * @param method Api method.
-     * @param body   Body to send as json
      */
-    private void request(String method, Object body) {
+    private void request(String method) {
         try {
             var url = backendUrl + "/api/" + method;
             var req = HttpRequest.newBuilder(new URI(url))
@@ -113,7 +112,7 @@ class GameManager implements IGameManager {
 
     @Override
     public void listGames() {
-        request("list", null);
+        request("list");
     }
 
     @Override
@@ -125,7 +124,7 @@ class GameManager implements IGameManager {
     public void createGame(String name, String password) {
         var gameName = URLEncoder.encode(name, StandardCharsets.UTF_8);
         var gamePassword = URLEncoder.encode(password, StandardCharsets.UTF_8);
-        request(String.format("create?name=%s&password=%s", gameName, gamePassword), null);
+        request(String.format("create?name=%s&password=%s", gameName, gamePassword));
     }
 
     @Override
@@ -138,7 +137,7 @@ class GameManager implements IGameManager {
         // url encode
         clientName = URLEncoder.encode(name, StandardCharsets.UTF_8);
         // make connect request
-        request(String.format("connect?name=%s", clientName), null);
+        request(String.format("connect?name=%s", clientName));
         // start polling
         if (!thread.isAlive()) {
             abort = false;
@@ -148,7 +147,7 @@ class GameManager implements IGameManager {
 
     @Override
     public void disconnect() {
-        request("disconnect", null);
+        request("disconnect");
         currentGame = null;
         player = null;
         abort = true;
@@ -164,13 +163,13 @@ class GameManager implements IGameManager {
             if (password == null) {
                 password = "";
             }
-            request(String.format("join?game=%s&pass=%s", gameId, password), null);
+            request(String.format("join?game=%s&pass=%s", gameId, password));
         }
     }
 
     void start() {
         if (currentGame != null) {
-            request(String.format("start?game=%s", currentGame.getId()), null);
+            request(String.format("start?game=%s", currentGame.getId()));
         }
     }
 
@@ -178,7 +177,7 @@ class GameManager implements IGameManager {
      * Leave game.
      */
     void leave() {
-        request("leave", null);
+        request("leave");
     }
 
     /**
@@ -187,7 +186,7 @@ class GameManager implements IGameManager {
      * @param value
      */
     public void submitWord(String value) {
-        request(String.format("word?str=%s", value), null);
+        request(String.format("word?str=%s", value));
     }
 
     /**
@@ -196,7 +195,7 @@ class GameManager implements IGameManager {
      * @param value
      */
     public void submitGuess(String value) {
-        request(String.format("guess?str=%s", value), null);
+        request(String.format("guess?str=%s", value));
     }
 
     /**

@@ -24,16 +24,18 @@ import java.util.stream.Collectors;
 
 public class GameStage extends Stage {
 
-    private static final double CANVAS_WIDTH = 500;
-    private static final double CANVAS_HEIGHT = 400;
+    private static final double CANVAS_WIDTH = 480;
+    private static final double CANVAS_HEIGHT = 360;
     private final IGame game;
     private final Map<String, CanvasWrapper> canvasMap;
     private final Image[] stateImages;
+    private final Image blackBarImage;
     private final VBox canvasRows;
     private final TextField guessField;
     private final ListView<String> chatListView;
     private final ObservableList<String> chatList;
     private final TextField chatField;
+    private final Button startButton;
 
     private boolean isRunning;
 
@@ -63,6 +65,7 @@ public class GameStage extends Stage {
         for (int i = 0; i < stateImages.length; i++) {
             this.stateImages[i] = new Image(images.get(i));
         }
+        blackBarImage = new Image("BlackBarTR.png");
 
         // root layout
         VBox root = new VBox();
@@ -82,7 +85,8 @@ public class GameStage extends Stage {
         this.guessField.setOnAction(this::onEnterPressed);
         this.guessField.setDisable(true);
 
-        var startButton = new Button("Start");
+        startButton = new Button("Start");
+        startButton.setDisable(true);
         startButton.setOnAction(this::onStartButton);
 
         var sep = new Separator();
@@ -110,18 +114,20 @@ public class GameStage extends Stage {
     }
 
     private void onStartButton(ActionEvent actionEvent) {
-        if (actionEvent.getSource() instanceof Button) {
-            ((Button) actionEvent.getSource()).setVisible(false);
-            game.start();
-        }
+        startButton.setVisible(false);
+        game.start();
     }
 
     public void handlePlayerJoined(PlayerJoined event) {
-        updatePlayers(game.getPlayers());
+        var players = game.getPlayers();
+        updatePlayers(players);
+        startButton.setDisable(players.size() > 1);
     }
 
     public void handlePlayerLeft(PlayerLeft event) {
-        updatePlayers(game.getPlayers());
+        var players = game.getPlayers();
+        updatePlayers(players);
+        startButton.setDisable(players.size() > 1);
     }
 
     public void handlePlayerState(PlayerState event) {
@@ -199,17 +205,26 @@ public class GameStage extends Stage {
         //creating a rectangle covering 100% of the canvas makes it look like a background
         //The color is able to change
         GraphicsContext gc = wrapper.canvas.getGraphicsContext2D();
-        gc.setFill(Color.LIGHTSKYBLUE);
+
+        // if self
+        if(game.getManager().getClient().getClientId().equals(wrapper.player.getClientId())) {
+            gc.setFill(Color.LIGHTSKYBLUE);
+        } else {
+            gc.setFill(Color.LIGHTCORAL);
+        }
+
         gc.fillRect(0, 0, wrapper.canvas.getWidth(), wrapper.canvas.getHeight());
 
-        //Prints the black bar
-        blackBarForLetter(wrapper);
-        //Draws the hangman
-        hangmanFigure(wrapper);
-        //draws the wrongly guessed letters
-        addWrongLetter(wrapper);
-        //draws the correctly guessed word
-        addCorrectLetter(wrapper);
+        if(wrapper.player.getPlayState() != null) {
+            //Prints the black bar
+            blackBarForLetter(wrapper);
+            //Draws the hangman
+            hangmanFigure(wrapper);
+            //draws the wrongly guessed letters
+            addWrongLetter(wrapper);
+            //draws the correctly guessed word
+            addCorrectLetter(wrapper);
+        }
     }
 
     /**
@@ -229,8 +244,7 @@ public class GameStage extends Stage {
         //Prints the image same amount of times as a word has letters
         var letterCount = wrapper.player.getPlayState().getCurrentWord().length();
         for (int i = 0; letterCount > i; i++) {
-            Image image = new Image("BlackBarTR.png");
-            gc.drawImage(image, barSize * i * 1.5, wrapper.canvas.getHeight() * 0.8, barSize, wrapper.canvas.getHeight() * 0.01);
+            gc.drawImage(blackBarImage, barSize * i * 1.5, wrapper.canvas.getHeight() * 0.8, barSize, wrapper.canvas.getHeight() * 0.01);
         }
     }
 
@@ -257,7 +271,6 @@ public class GameStage extends Stage {
          * have a method to check if letter is correct
          * if wrong print it on the canvas
          */
-        Scanner scanner = new Scanner(System.in);
         int counter = -1;
         int maxLetterSize = 100;
         int letterSize = (int) (wrapper.canvas.getWidth() * 0.01 * wrapper.canvas.getHeight() * 0.02);

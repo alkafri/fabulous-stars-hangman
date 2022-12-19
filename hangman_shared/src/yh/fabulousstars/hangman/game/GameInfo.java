@@ -1,8 +1,9 @@
 package yh.fabulousstars.hangman.game;
 
 import java.io.Serial;
+import java.io.Serializable;
 
-public class GameInfo {
+public class GameInfo implements Serializable {
     @Serial
     private static final long serialVersionUID = 1020304054L;
     private String gameId;
