@@ -1,7 +1,6 @@
-<%@ page import="yh.fabulousstars.hangman.server.BaseServlet" %>
-<%@ page import="java.util.Iterator" %>
 <%@ page import="com.google.appengine.api.datastore.*" %>
 <%@ page import="java.util.List" %>
+<%@ page import="yh.fabulousstars.hangman.server.BaseServlet" %>
 
 <!DOCTYPE html>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
@@ -18,21 +17,21 @@
 <h1>Fabulous Backend</h1>
 <%
     DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-    var fetchOptions = FetchOptions.Builder.withDefaults();
+    FetchOptions fetchOptions = FetchOptions.Builder.withDefaults();
     List<Entity> games = datastore.prepare(new Query(BaseServlet.PLAYER_TYPE)).asList(fetchOptions);
     List<Entity> players = datastore.prepare(new Query(BaseServlet.GAME_TYPE)).asList(fetchOptions);
 %>
 <hr />
 <h2>Game instances:</h2>
 <ul>
-<%  for(var game : games) { %>
+<%  for(Entity game : games) { %>
     <li><% game.getProperty("name"); %></li>
 <%  } %>
 </ul>
 <hr />
 <h2>Server players:</h2>
 <ul>
-<%  for(var player : players) { %>
+<%  for(Entity player : players) { %>
     <li><% player.getProperty("name"); %></li>
     <%  } %>
 </ul>

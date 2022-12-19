@@ -7,7 +7,7 @@ import java.util.Map;
 
 public final class GameLogics {
 
-    private static int MAX_DAMAGE = 11;
+    private static final int MAX_DAMAGE = 11;
 
     /**
      * Get random word from bucket for each player not belonging to player.
@@ -34,9 +34,9 @@ public final class GameLogics {
 
     /**
      *
-     * @param gameState
-     * @param clientId
-     * @param guess
+     * @param gameState Game state to operate on
+     * @param clientId Calling client
+     * @param guess Guessed letter
      * @return changed states
      */
     public static List<PlayState> makeGuess(GameState gameState, String clientId, String guess) {
@@ -124,9 +124,9 @@ public final class GameLogics {
     /**
      * Set player word.
      * Guessing starts when all words are set.
-     * @param gameState
-     * @param clientId
-     * @param word
+     * @param gameState Game state to operate on
+     * @param clientId Calling client
+     * @param word Word to set
      * @return changed states or null.
      */
     public static List<PlayState> setWord(GameState gameState, String clientId, String word) {
