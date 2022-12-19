@@ -11,13 +11,13 @@ public final class DialogHelper {
         alertWindow.setContentText(message);
         var res = alertWindow.showAndWait();
         return res.get().equals(ButtonType.OK);
-   }
+    }
 
     public static String promptString(String prompt) {
-       TextInputDialog dialog = new TextInputDialog();
-       dialog.setTitle("Input");
-       dialog.setContentText(prompt);
-       var result = dialog.showAndWait();
-       return result.isPresent() ? result.get() : null;
-   }
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("Input");
+        dialog.setContentText(prompt);
+        var result = dialog.showAndWait();
+        return result.isPresent() ? result.get() : null;
+    }
 }

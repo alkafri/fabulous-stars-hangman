@@ -3,34 +3,33 @@ package yh.fabulousstars.hangman.client;
 import javafx.application.Platform;
 import yh.fabulousstars.hangman.client.events.*;
 import yh.fabulousstars.hangman.game.EventObject;
+import yh.fabulousstars.hangman.game.GameInfo;
+import yh.fabulousstars.hangman.game.PlayerInfo;
 
-import java.net.CookieManager;
-import java.net.CookiePolicy;
-import java.net.URI;
-import java.net.URLEncoder;
+import java.net.*;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 class GameManager implements IGameManager {
     private static final long POLL_MS = 3000;
-    private LocalGame currentGame;
     private final String backendUrl;
+    private final HttpClient http;
+    private final Thread thread;
+    private LocalGame currentGame;
     private IGameEventHandler handler;
     private String clientName;
     private LocalPlayer player;
-    private final HttpClient http;
-    private final Thread thread;
     private boolean abort = false;
 
     /**
      * Construct a game client.
+     *
      * @param backendUrl api
-     * @param handler game event handler
+     * @param handler    game event handler
      */
     GameManager(String backendUrl, IGameEventHandler handler) {
         this.backendUrl = backendUrl;
@@ -50,11 +49,11 @@ class GameManager implements IGameManager {
 
     private void clientThread() {
         long nextPoll = 0; // next poll time
-        while(!abort) {
+        while (!abort) {
             // poll delay
             if (nextPoll < System.currentTimeMillis()) {
                 // poll
-                if(threadPoll()) {
+                if (threadPoll()) {
                     nextPoll = System.currentTimeMillis() + POLL_MS;
                     continue;
                 }
@@ -62,24 +61,33 @@ class GameManager implements IGameManager {
             // sleep
             try {
                 Thread.sleep(200);
-            } catch (InterruptedException e) {}
+            } catch (InterruptedException e) {
+            }
         }
     }
 
     /**
      * Poll for game event.
+     *
      * @return true for delay
      */
     private boolean threadPoll() {
         try {
             var req = HttpRequest.newBuilder(new URI(backendUrl + "/api/poll"))
-                .GET().build();
+                    .GET().build();
             var resp = http.send(req, HttpResponse.BodyHandlers.ofByteArray());
-            var event = ObjectHelper.fromBytes(resp.body());
-            if(event != null) {
-                sendEvent((EventObject)event);
-                return false;
+            if (resp.statusCode() >= 400) {
+                sendEvent(new EventObject("reset"));
+                return true;
             }
+            var event = ObjectHelper.fromBytes(resp.body());
+            if (event != null) {
+                if (!((EventObject) event).getName().equals("idle")) {
+                    sendEvent((EventObject) event);
+                    return false;
+                }
+            }
+        } catch (ConnectException ex) {
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -88,14 +96,15 @@ class GameManager implements IGameManager {
 
     /**
      * Send GET or PUT request to server depending on if there is a body or not.
+     *
      * @param method Api method.
-     * @param body Body to send as json
+     * @param body   Body to send as json
      */
     private void request(String method, Object body) {
         try {
-            var url = backendUrl + "/api/"+method;
+            var url = backendUrl + "/api/" + method;
             var req = HttpRequest.newBuilder(new URI(url))
-                .GET().build();
+                    .GET().build();
             http.send(req, HttpResponse.BodyHandlers.discarding());
         } catch (Exception e) {
             e.printStackTrace();
@@ -104,7 +113,7 @@ class GameManager implements IGameManager {
 
     @Override
     public void listGames() {
-        request("list",null);
+        request("list", null);
     }
 
     @Override
@@ -115,8 +124,8 @@ class GameManager implements IGameManager {
     @Override
     public void createGame(String name, String password) {
         var gameName = URLEncoder.encode(name, StandardCharsets.UTF_8);
-        var gamePassword =  URLEncoder.encode(password, StandardCharsets.UTF_8);
-        request(String.format("create?name=%s&password=%s", gameName, gamePassword),null);
+        var gamePassword = URLEncoder.encode(password, StandardCharsets.UTF_8);
+        request(String.format("create?name=%s&password=%s", gameName, gamePassword), null);
     }
 
     @Override
@@ -129,9 +138,9 @@ class GameManager implements IGameManager {
         // url encode
         clientName = URLEncoder.encode(name, StandardCharsets.UTF_8);
         // make connect request
-        request(String.format("connect?name=%s", clientName),null);
+        request(String.format("connect?name=%s", clientName), null);
         // start polling
-        if(!thread.isAlive()) {
+        if (!thread.isAlive()) {
             abort = false;
             thread.start();
         }
@@ -139,26 +148,29 @@ class GameManager implements IGameManager {
 
     @Override
     public void disconnect() {
-        request("disconnect",null);
+        request("disconnect", null);
+        currentGame = null;
+        player = null;
         abort = true;
     }
 
     /**
      * Join game.
+     *
      * @param gameId
      */
     public void join(String gameId, String password) {
-        if(player != null) {
-            if(password==null) {
+        if (player != null) {
+            if (password == null) {
                 password = "";
             }
-            request(String.format("join?game=%s&pass=%s", gameId, password),null);
+            request(String.format("join?game=%s&pass=%s", gameId, password), null);
         }
     }
 
     void start() {
-        if(currentGame != null) {
-            request(String.format("start?game=%s", currentGame.getId()),null);
+        if (currentGame != null) {
+            request(String.format("start?game=%s", currentGame.getId()), null);
         }
     }
 
@@ -166,34 +178,36 @@ class GameManager implements IGameManager {
      * Leave game.
      */
     void leave() {
-        request("leave",null);
+        request("leave", null);
     }
 
     /**
      * Submit a word.
+     *
      * @param value
      */
     public void submitWord(String value) {
-        request(String.format("word?str=%s", value),null);
+        request(String.format("word?str=%s", value), null);
     }
 
     /**
      * Submit a guess.
+     *
      * @param value
      */
     public void submitGuess(String value) {
-        request(String.format("guess?str=%s", value),null);
+        request(String.format("guess?str=%s", value), null);
     }
 
     /**
      * Send event on ui thread.
-     *
-     *  created: Game
-     *  connected: Player
-     *  connect_error: Message
-     *  created
-     *  joined: Game
-     *  started: Game
+     * <p>
+     * created: Game
+     * connected: Player
+     * connect_error: Message
+     * created
+     * joined: Game
+     * started: Game
      *
      * @param serverEvent
      */
@@ -210,15 +224,17 @@ class GameManager implements IGameManager {
             case "submit_guess" -> getSubmitGuess(serverEvent);
             case "request_word" -> getRequestWord(serverEvent);
             case "request_guess" -> getRequestGuess(serverEvent);
+            case "reset" -> new ResetClient();
             default -> null;
         };
-        if(gameEvent != null) {
+        if (gameEvent != null) {
             Platform.runLater(() -> handler.handleGameEvent(gameEvent));
         }
     }
 
     /**
      * Build a SubmitGuess event from serverEvent.
+     *
      * @param serverEvent
      * @return SubmitGuess
      */
@@ -230,6 +246,7 @@ class GameManager implements IGameManager {
 
     /**
      * Build a RequestWord event from serverEvent.
+     *
      * @param serverEvent
      * @return RequestWord
      */
@@ -242,6 +259,7 @@ class GameManager implements IGameManager {
 
     /**
      * Build a RequestGuess event from serverEvent.
+     *
      * @param serverEvent
      * @return RequestGuess
      */
@@ -251,18 +269,20 @@ class GameManager implements IGameManager {
 
     /**
      * Build a PlayerState event from serverEvent.
+     *
      * @param serverEvent
      * @return PlayerState
      */
     private IGameEvent getPlayerState(EventObject serverEvent) {
         PlayState playState = (PlayState) serverEvent.getPayload();
-        var player = (LocalPlayer)currentGame.getPlayer(playState.getClientId());
+        var player = (LocalPlayer) currentGame.getPlayer(playState.getClientId());
         player.setPlayState(playState);
         return new PlayerState(playState.getClientId(), playState);
     }
 
     /**
      * Build a ChatMessage event from serverEvent.
+     *
      * @param serverEvent
      * @return ChatMessage
      */
@@ -274,6 +294,7 @@ class GameManager implements IGameManager {
 
     /**
      * Build a LeaveGame event from serverEvent.
+     *
      * @param serverEvent
      * @return LeaveGame
      */
@@ -285,11 +306,12 @@ class GameManager implements IGameManager {
 
     /**
      * Build a JoinGame event from serverEvent.
+     *
      * @param serverEvent
      * @return JoinGame
      */
     private IGameEvent getCreateOrJoin(EventObject serverEvent) {
-        if(serverEvent.contains("error")) {
+        if (serverEvent.contains("error")) {
             return new JoinOrCreate(null, serverEvent.get("error"));
         } else {
             currentGame = new LocalGame(this,
@@ -302,44 +324,37 @@ class GameManager implements IGameManager {
 
     /**
      * Build a PlayerList event from serverEvent.
+     *
      * @param serverEvent
      * @return PlayerList
      */
     private IGameEvent getPlayerList(EventObject serverEvent) {
-        List<Map<String,String>> mapList = (List<Map<String, String>>) serverEvent.getPayload();
+        List<PlayerInfo> infList = (List<PlayerInfo>) serverEvent.getPayload();
         var gameId = serverEvent.get("gameId");
         List<IPlayer> players = new ArrayList<>();
-        if(currentGame!=null && !currentGame.getId().equals(gameId)) {
+        if (currentGame != null && !currentGame.getId().equals(gameId)) {
             // getting player list when not in game should never happen
             throw new RuntimeException("Incorrect game id!");
         }
-        for (var map : mapList) {
+        for (var playerInf : infList) {
             var player = new LocalPlayer(
                     currentGame,
-                    map.get("name"),
-                    map.get("clientId")
+                    playerInf.getName(),
+                    playerInf.getClientId()
             );
             players.add(player);
         }
-        return new PlayerList(players, gameId!=null);
+        return new PlayerList(players, gameId != null);
     }
 
     /**
      * Build a GameList event from serverEvent.
+     *
      * @param serverEvent
      * @return GameList
      */
     private IGameEvent getGameList(EventObject serverEvent) {
-        List<Map<String,String>> mapList = (List<Map<String, String>>) serverEvent.getPayload();
-        List<GameList.Game> games = new ArrayList<>();
-        for (var map : mapList) {
-            games.add(new GameList.Game(
-                    map.get("gameId"),
-                    map.get("name"),
-                    map.get("protected").equals("1")
-            ));
-        }
-        return new GameList(games);
+        return new GameList((List<GameInfo>) serverEvent.getPayload());
     }
 
     /**
@@ -349,21 +364,20 @@ class GameManager implements IGameManager {
      * @return ClientConnect
      */
     private IGameEvent getClientConnect(EventObject serverEvent) {
-        if(serverEvent.contains("error")) {
+        if (serverEvent.contains("error")) {
             return new ClientConnect(null, serverEvent.get("error"));
-        }
-        else {
+        } else {
             var id = serverEvent.get("clientId");
             var name = serverEvent.get("name");
             player = new LocalPlayer(null, name, id);
-            return new ClientConnect(player,null);
+            return new ClientConnect(player, null);
         }
     }
 
     public void shutdown() {
         try {
             abort = true;
-            if(thread.isAlive()) {
+            if (thread.isAlive()) {
                 thread.join();
             }
         } catch (InterruptedException e) {

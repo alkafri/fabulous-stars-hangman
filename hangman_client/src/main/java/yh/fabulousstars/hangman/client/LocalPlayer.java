@@ -23,6 +23,10 @@ class LocalPlayer implements IPlayer {
         return game;
     }
 
+    void setGame(LocalGame game) {
+        game = game;
+    }
+
     @Override
     public String getName() {
         return name;
@@ -33,24 +37,21 @@ class LocalPlayer implements IPlayer {
         return playState;
     }
 
+    public void setPlayState(PlayState playState) {
+        this.playState = playState;
+    }
+
     @Override
     public void submitWord(String value) {
-        if(game != null) {
+        if (game != null) {
             game.getClient().submitWord(value);
         }
     }
+
     @Override
     public void submitGuess(String value) {
-        if(game != null) {
+        if (game != null) {
             game.getClient().submitGuess(value);
         }
-    }
-
-    void setGame(LocalGame game) {
-        game = game;
-    }
-
-    public void setPlayState(PlayState playState) {
-        this.playState = playState;
     }
 }

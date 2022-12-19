@@ -14,9 +14,9 @@ To run this sample locally:
 ```
 mvn package appengine:run
 ```
+
 To see the results of the sample application, open
 [localhost:8080](http://localhost:8080) in a web browser.
-
 
 ## Deploying
 

@@ -110,8 +110,8 @@ public class GameStage extends Stage {
     }
 
     private void onStartButton(ActionEvent actionEvent) {
-        if(actionEvent.getSource() instanceof Button) {
-            ((Button)actionEvent.getSource()).setVisible(false);
+        if (actionEvent.getSource() instanceof Button) {
+            ((Button) actionEvent.getSource()).setVisible(false);
             game.start();
         }
     }
@@ -214,6 +214,7 @@ public class GameStage extends Stage {
 
     /**
      * Draw letter positions.
+     *
      * @param wrapper
      */
     public void blackBarForLetter(CanvasWrapper wrapper) {
@@ -235,14 +236,17 @@ public class GameStage extends Stage {
 
     /**
      * Draw figure based on damage.
+     *
      * @param wrapper
      */
     public void hangmanFigure(CanvasWrapper wrapper) {
 
         GraphicsContext gc = wrapper.canvas.getGraphicsContext2D();
         var state = wrapper.player.getPlayState();
-        var damage = state==null ? 0 : state.getTotalDamage();
-        if(damage >= stateImages.length) { damage = stateImages.length-1; }
+        var damage = state == null ? 0 : state.getTotalDamage();
+        if (damage >= stateImages.length) {
+            damage = stateImages.length - 1;
+        }
         gc.drawImage(stateImages[damage], 0, 10, wrapper.canvas.getWidth() * 0.3, wrapper.canvas.getHeight() * 0.5);
     }
 
@@ -310,7 +314,7 @@ public class GameStage extends Stage {
         gc.setFont(new Font("Arial", letterSize));
 
         //Prints the image same amount of times as a word has letters
-        var wordLength= wrapper.player.getPlayState().getCurrentWord().length();
+        var wordLength = wrapper.player.getPlayState().getCurrentWord().length();
         for (int i = 0; wordLength > i; i++) {
 
             if (wrapper.correctLetters.size() <= wordLength) {
@@ -331,7 +335,7 @@ public class GameStage extends Stage {
     public void onEnterPressed(ActionEvent event) {
         var guess = guessField.getText().trim();
         guessField.clear();
-        if(guess.length()==1) {
+        if (guess.length() == 1) {
             // send to server
             game.getManager().getClient().submitGuess(guess);
         }
@@ -340,19 +344,20 @@ public class GameStage extends Stage {
     /**
      * Request word from player.
      * Send it to server.
+     *
      * @param event
      */
     public void handleRequestWord(RequestWord event) {
         String word = null;
-        while(word==null) {
+        while (word == null) {
             word = DialogHelper.promptString(String.format(
                     "Enter new word between %d and %d letters:",
                     event.getMinLength(),
                     event.getMaxLength()
             ));
-            if(word!=null) {
+            if (word != null) {
                 word = word.strip();
-                if(word.length() >= event.getMinLength()
+                if (word.length() >= event.getMinLength()
                         && word.length() <= event.getMaxLength()) {
                     break;
                 }

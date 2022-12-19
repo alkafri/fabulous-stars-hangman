@@ -1,6 +1,6 @@
 <%@ page import="com.google.appengine.api.datastore.*" %>
-<%@ page import="java.util.List" %>
 <%@ page import="yh.fabulousstars.hangman.server.BaseServlet" %>
+<%@ page import="java.util.Iterator" %>
 
 <!DOCTYPE html>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
@@ -9,31 +9,38 @@
 
 <html>
 <head>
-  <link href='//fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
-  <title>Fabulous Backend</title>
+    <link href='//fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+    <title>Fabulous Backend</title>
 </head>
 <body>
 
 <h1>Fabulous Backend</h1>
 <%
     DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-    FetchOptions fetchOptions = FetchOptions.Builder.withDefaults();
-    List<Entity> games = datastore.prepare(new Query(BaseServlet.PLAYER_TYPE)).asList(fetchOptions);
-    List<Entity> players = datastore.prepare(new Query(BaseServlet.GAME_TYPE)).asList(fetchOptions);
 %>
-<hr />
+<hr/>
 <h2>Game instances:</h2>
 <ul>
-<%  for(Entity game : games) { %>
-    <li><% game.getProperty("name"); %></li>
-<%  } %>
+    <%
+        Iterator<Entity> games = datastore.prepare(new Query(BaseServlet.GAME_TYPE)).asIterator();
+        while (games.hasNext()) {
+            Entity game = games.next();
+    %>
+    <li><%= game.getProperty("name").toString() %>
+    </li>
+    <% } %>
 </ul>
-<hr />
+<hr/>
 <h2>Server players:</h2>
 <ul>
-<%  for(Entity player : players) { %>
-    <li><% player.getProperty("name"); %></li>
-    <%  } %>
+    <%
+        Iterator<Entity> players = datastore.prepare(new Query(BaseServlet.PLAYER_TYPE)).asIterator();
+        while (players.hasNext()) {
+            Entity player = players.next();
+    %>
+    <li><%= player.getProperty("name").toString() %>
+    </li>
+    <% } %>
 </ul>
 
 </body>

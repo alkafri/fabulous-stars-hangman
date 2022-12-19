@@ -13,24 +13,28 @@ public interface IGame {
 
     /**
      * Get players.
+     *
      * @return list of players.
      */
     List<IPlayer> getPlayers();
 
     /**
      * Get players.
+     *
      * @return list of players.
      */
     IPlayer getPlayer(String clientId);
 
     /**
      * Get manager the game belongs to.
+     *
      * @return IGameManager instance
      */
     IGameManager getManager();
 
     /**
      * Get game name.
+     *
      * @return game name
      */
     String getName();

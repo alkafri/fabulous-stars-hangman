@@ -21,7 +21,7 @@ public final class GameLogics {
             // get first word not belonging to player
             for (int i = 0; i < opponentIds.size(); i++) {
                 var opponentId = opponentIds.get(i);
-                if(!opponentId.equals(player.getClientId())) {
+                if (!opponentId.equals(player.getClientId())) {
                     // set word
                     player.setCurrentWord(opponentId, wordBucket.get(opponentId));
                     // remove used word from bucket
@@ -33,10 +33,9 @@ public final class GameLogics {
     }
 
     /**
-     *
      * @param gameState Game state to operate on
-     * @param clientId Calling client
-     * @param guess Guessed letter
+     * @param clientId  Calling client
+     * @param guess     Guessed letter
      * @return changed states
      */
     public static List<PlayState> makeGuess(GameState gameState, String clientId, String guess) {
@@ -71,26 +70,26 @@ public final class GameLogics {
 */
         var correct = player.getCorrectGuesses();
         var wrong = player.getWrongGuesses();
-            // Check if the user input is in the array of letters
-            for (int i = 0; i < letters.length; i++) {
+        // Check if the user input is in the array of letters
+        for (int i = 0; i < letters.length; i++) {
 
-                if (letters[i] == letter) {
-                    // If a match is found, print the index and character
-                    // System.out.println("Found a match at index " + i + ": " + letters[i]);
-                    //replace '*' with correct letter
-                    correct.set(i, letter);
-                    foundMatch = true;
+            if (letters[i] == letter) {
+                // If a match is found, print the index and character
+                // System.out.println("Found a match at index " + i + ": " + letters[i]);
+                //replace '*' with correct letter
+                correct.set(i, letter);
+                foundMatch = true;
 
-                }
             }
-            // Check if the user has lost
-            if (!foundMatch) {
-                wrong.add(letter);
-                if (player.getTotalDamage() >= MAX_DAMAGE) {
-                    player.setPlayerState(PlayState.DEAD);
-                    sendStates.add(player);
-                }
+        }
+        // Check if the user has lost
+        if (!foundMatch) {
+            wrong.add(letter);
+            if (player.getTotalDamage() >= MAX_DAMAGE) {
+                player.setPlayerState(PlayState.DEAD);
+                sendStates.add(player);
             }
+        }
 
         //}
         int counter = 0;
@@ -115,7 +114,9 @@ public final class GameLogics {
             // Continue until all players have guessed or died
             // If more than one player left, draw new round for remaining.
 
-            if(!sendStates.contains(player)) { sendStates.add(player); }
+            if (!sendStates.contains(player)) {
+                sendStates.add(player);
+            }
         }
 
         return sendStates;
@@ -124,15 +125,16 @@ public final class GameLogics {
     /**
      * Set player word.
      * Guessing starts when all words are set.
+     *
      * @param gameState Game state to operate on
-     * @param clientId Calling client
-     * @param word Word to set
+     * @param clientId  Calling client
+     * @param word      Word to set
      * @return changed states or null.
      */
     public static List<PlayState> setWord(GameState gameState, String clientId, String word) {
         gameState.setPlayerWord(clientId, word);
         var players = gameState.getPlayers();
-        if(gameState.hasWords()) {
+        if (gameState.hasWords()) {
             chooseWords(gameState.getWordBucket(), players);
             return players;
         }

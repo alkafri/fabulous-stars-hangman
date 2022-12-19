@@ -11,45 +11,39 @@ public class CanvasClass extends Canvas {
     }
 
     @Override
-    public double minHeight(double width)
-    {
+    public double minHeight(double width) {
         return 376;
     }
 
     @Override
-    public double maxHeight(double width)
-    {
+    public double maxHeight(double width) {
         return Double.MAX_VALUE;
     }
 
     @Override
-    public double prefHeight(double width)
-    {
+    public double prefHeight(double width) {
         return minHeight(width);
     }
 
     @Override
-    public double minWidth(double height)
-    {
+    public double minWidth(double height) {
         return 376;
     }
 
     @Override
-    public double maxWidth(double height)
-    {
+    public double maxWidth(double height) {
         return Double.MAX_VALUE;
     }
 
     @Override
-    public boolean isResizable()
-    {
+    public boolean isResizable() {
         return true;
     }
 
     @Override
-    public void resize(double width, double height)
-    {
+    public void resize(double width, double height) {
         super.setWidth(width);
         super.setHeight(height);
 
-    }}
+    }
+}

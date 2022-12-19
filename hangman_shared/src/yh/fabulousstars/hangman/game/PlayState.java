@@ -1,5 +1,6 @@
 package yh.fabulousstars.hangman.game;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 
@@ -13,7 +14,8 @@ public class PlayState implements Serializable {
     public static final int SUBMIT_GUESS = 3;
     public static final int DEAD = 4;
     public static final int WON = 5;
-
+    @Serial
+    private static final long serialVersionUID = 1020304052L;
     private String clientId;
     private String opponentId;
     private String currentWord;

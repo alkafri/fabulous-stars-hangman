@@ -1,6 +1,6 @@
 package yh.fabulousstars.hangman.client.events;
 
-public class SubmitGuess extends  AbstractEvent {
+public class SubmitGuess extends AbstractEvent {
     private boolean correct;
     private String guess;
 

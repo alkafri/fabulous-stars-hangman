@@ -12,6 +12,7 @@ import yh.fabulousstars.hangman.client.IGameEvent;
 import yh.fabulousstars.hangman.client.IGameManager;
 import yh.fabulousstars.hangman.client.IPlayer;
 import yh.fabulousstars.hangman.client.events.*;
+import yh.fabulousstars.hangman.game.GameInfo;
 import yh.fabulousstars.hangman.gui.DialogHelper;
 import yh.fabulousstars.hangman.gui.GameStage;
 
@@ -20,11 +21,10 @@ import java.util.ResourceBundle;
 
 public class GameController implements Initializable {
 
-    enum UISection {
-        Connect,
-        Create,
-        Join
-    }
+    private final IGameManager gameManager;
+    private final ObservableList<GameInfo> gameList;
+    private final ObservableList<IPlayer> playerList;
+    private final ObservableList<String> chatList;
     @FXML
     public ListView<String> lobbyChat;
     @FXML
@@ -38,17 +38,12 @@ public class GameController implements Initializable {
     @FXML
     public TextField joinPasswordField;
     @FXML
-    public ListView<GameList.Game> gameListView;
+    public ListView<GameInfo> gameListView;
     @FXML
     public ListView<IPlayer> playerListView;
     @FXML
     public Button joinButton;
-    private final IGameManager gameManager;
-    private final ObservableList<GameList.Game> gameList;
-    private final ObservableList<IPlayer> playerList;
-    private final ObservableList<String> chatList;
     private GameStage gameWindow;
-
     /**
      * Constructor
      */
@@ -59,8 +54,10 @@ public class GameController implements Initializable {
         this.gameList = FXCollections.observableArrayList();
         this.chatList = FXCollections.observableArrayList();
     }
+
     /**
      * Create game clicked.
+     *
      * @param event
      */
     @FXML
@@ -68,7 +65,7 @@ public class GameController implements Initializable {
 
         var name = gameNameField.getText().strip();
         var password = joinPasswordField.getText();
-        if(!name.isEmpty()) {
+        if (!name.isEmpty()) {
             setUIState(false, UISection.Create, UISection.Join);
             gameManager.createGame(name, password);
         } else {
@@ -79,22 +76,23 @@ public class GameController implements Initializable {
 
     public void onConnectButton(ActionEvent actionEvent) {
         var playerName = playerNameField.getText().strip();
-        if(!playerName.isEmpty()) {
+        if (!playerName.isEmpty()) {
             gameManager.connect(playerName);
         }
     }
 
     /**
      * Enable of disable UI section.
-     * @param enabled Boolean
+     *
+     * @param enabled  Boolean
      * @param sections Sections
      */
     private void setUIState(boolean enabled, UISection... sections) {
-        for(var section : sections) {
+        for (var section : sections) {
             if (section.equals(UISection.Connect)) {
                 connectButton.setDisable(!enabled);
                 playerNameField.setDisable(!enabled);
-            } else if(section.equals(UISection.Create)) {
+            } else if (section.equals(UISection.Create)) {
                 gameNameField.setDisable(!enabled);
                 joinPasswordField.setDisable(!enabled);
                 createButton.setDisable(!enabled);
@@ -109,39 +107,39 @@ public class GameController implements Initializable {
     public void onJoinButtonClick(ActionEvent event) {
         var gameRef = gameListView.getSelectionModel().getSelectedItem();
         String password = null;
-        if(gameRef.hasPassword()) {
+        if (gameRef.hasProtection()) {
             password = DialogHelper.promptString("Insert password.");
-            if(password == null) return;
+            if (password == null) return;
         }
-        if(DialogHelper.showMessage("Join game '"+gameRef.name()+"'?", Alert.AlertType.CONFIRMATION)) {
+        if (DialogHelper.showMessage("Join game '" + gameRef.getName() + "'?", Alert.AlertType.CONFIRMATION)) {
             setUIState(false, UISection.Join, UISection.Connect, UISection.Create);
-            gameManager.join(gameRef.gameId(), password);
+            gameManager.join(gameRef.getGameId(), password);
         }
     }
 
-
     /**
      * Initialize game controller.
-     * @param location
-     * The location used to resolve relative paths for the root object, or
-     * {@code null} if the location is not known.
      *
-     * @param resources
-     * The resources used to localize the root object, or {@code null} if
-     * the root object was not localized.
+     * @param location  The location used to resolve relative paths for the root object, or
+     *                  {@code null} if the location is not known.
+     * @param resources The resources used to localize the root object, or {@code null} if
+     *                  the root object was not localized.
      */
     @Override
     public void initialize(URL location, ResourceBundle resources) {
 
         gameListView.setCellFactory(new Callback<>() {
             @Override
-            public ListCell<GameList.Game> call(ListView<GameList.Game> gameListView) {
+            public ListCell<GameInfo> call(ListView<GameInfo> gameListView) {
                 return new ListCell<>() {
                     @Override
-                    protected void updateItem(GameList.Game game, boolean b) {
+                    protected void updateItem(GameInfo game, boolean b) {
                         super.updateItem(game, b);
-                        if(game==null) {setText(""); }
-                        else { setText(game.name()); }
+                        if (game == null) {
+                            setText("");
+                        } else {
+                            setText(game.getName());
+                        }
                     }
                 };
             }
@@ -156,8 +154,11 @@ public class GameController implements Initializable {
                     @Override
                     protected void updateItem(IPlayer player, boolean b) {
                         super.updateItem(player, b);
-                        if(player==null) { setText(""); }
-                        else { setText(player.getName()); }
+                        if (player == null) {
+                            setText("");
+                        } else {
+                            setText(player.getName());
+                        }
                     }
                 };
             }
@@ -176,9 +177,9 @@ public class GameController implements Initializable {
     }
 
     private void handleGameEvent(IGameEvent event) {
-        if(event instanceof JoinOrCreate) {
-            var evt = (JoinOrCreate)event;
-            if(evt.getError()==null) {
+        if (event instanceof JoinOrCreate) {
+            var evt = (JoinOrCreate) event;
+            if (evt.getError() == null) {
                 DialogHelper.showMessage(evt.getError(), Alert.AlertType.ERROR);
                 setUIState(true, UISection.Join, UISection.Create);
             } else {
@@ -186,39 +187,39 @@ public class GameController implements Initializable {
                 gameWindow = new GameStage(evt.getGame());
             }
         } else if (event instanceof PlayerJoined) {
-            gameWindow.handlePlayerJoined((PlayerJoined)event);
+            gameWindow.handlePlayerJoined((PlayerJoined) event);
         } else if (event instanceof PlayerLeft) {
-            gameWindow.handlePlayerLeft((PlayerLeft)event);
+            gameWindow.handlePlayerLeft((PlayerLeft) event);
         } else if (event instanceof PlayerState) {
-            gameWindow.handlePlayerState((PlayerState)event);
+            gameWindow.handlePlayerState((PlayerState) event);
         } else if (event instanceof LeaveGame) {
             gameWindow.close();
             gameWindow = null;
             setUIState(true, UISection.Join, UISection.Create);
         } else if (event instanceof GameStarted) {
-            gameWindow.handleGameStarted((GameStarted)event);
+            gameWindow.handleGameStarted((GameStarted) event);
         } else if (event instanceof RequestWord) {
-            gameWindow.handleRequestWord((RequestWord)event);
+            gameWindow.handleRequestWord((RequestWord) event);
         } else if (event instanceof RequestGuess) {
-            gameWindow.handleRequestGuess((RequestGuess)event);
-        }  else if (event instanceof SubmitGuess) {
-            gameWindow.handleSubmitGuess((SubmitGuess)event);
+            gameWindow.handleRequestGuess((RequestGuess) event);
+        } else if (event instanceof SubmitGuess) {
+            gameWindow.handleSubmitGuess((SubmitGuess) event);
         } else if (event instanceof GameList) {
-            var evt = (GameList)event;
+            var evt = (GameList) event;
             gameList.clear();
             gameList.addAll(evt.getGameList());
         } else if (event instanceof PlayerList) {
-            var evt = (PlayerList)event;
-            if(evt.isInGame()) {
-                gameWindow.handlePlayerList((PlayerList)event);
+            var evt = (PlayerList) event;
+            if (evt.isInGame()) {
+                gameWindow.handlePlayerList((PlayerList) event);
             } else {
                 playerList.clear();
                 playerList.addAll(evt.getPlayerList());
             }
         } else if (event instanceof ClientConnect) {
-            var evt = (ClientConnect)event;
+            var evt = (ClientConnect) event;
             var err = evt.getError();
-            if(err != null) {
+            if (err != null) {
                 DialogHelper.showMessage(err, Alert.AlertType.ERROR);
                 setUIState(true, UISection.Connect);
             } else {
@@ -226,12 +227,24 @@ public class GameController implements Initializable {
                 setUIState(true, UISection.Join, UISection.Create);
             }
         } else if (event instanceof ChatMessage) {
-            var evt = (ChatMessage)event;
-            if(evt.isInGame()) {
-                gameWindow.handleChatMessage((ChatMessage)event);
+            var evt = (ChatMessage) event;
+            if (evt.isInGame()) {
+                gameWindow.handleChatMessage((ChatMessage) event);
             } else {
                 chatList.add(0, evt.getMessage());
             }
+        } else if (event instanceof ResetClient) {
+            setUIState(true, UISection.Connect);
+            setUIState(false, UISection.Join, UISection.Create);
+            gameManager.disconnect();
+            chatList.clear();
+            gameWindow.close();
         }
+    }
+
+    enum UISection {
+        Connect,
+        Create,
+        Join
     }
 }

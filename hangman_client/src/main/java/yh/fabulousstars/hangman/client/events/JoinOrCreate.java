@@ -2,7 +2,7 @@ package yh.fabulousstars.hangman.client.events;
 
 import yh.fabulousstars.hangman.client.IGame;
 
-public class JoinOrCreate extends AbstractEvent{
+public class JoinOrCreate extends AbstractEvent {
     private final IGame game;
     private final String error;
 

@@ -1,16 +1,20 @@
 package yh.fabulousstars.hangman.game;
 
+import java.io.Serial;
 import java.io.Serializable;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * The game state holds the actual state of the game.
  * GameLogics methods operate on GameState instances.
  */
 public class GameState implements Serializable {
-    private boolean started;
+    @Serial
+    private static final long serialVersionUID = 1020304051L;
     private final HashMap<String, String> wordBucket;
     private final HashMap<String, PlayState> players;
+    private boolean started;
 
     public GameState() {
         this.wordBucket = new HashMap<>();
@@ -29,6 +33,7 @@ public class GameState implements Serializable {
     public List<PlayState> getPlayers() {
         return players.values().stream().toList();
     }
+
     public PlayState getPlayState(String clientId) {
         return players.get(clientId);
     }
@@ -41,19 +46,20 @@ public class GameState implements Serializable {
         players.remove(clientId);
     }
 
-    public void setStarted(boolean started) {
-        this.started = started;
-    }
-
     public boolean getStarted() {
         return started;
     }
 
+    public void setStarted(boolean started) {
+        this.started = started;
+    }
+
     /**
      * Bucket is filled with words.
+     *
      * @return
      */
     public boolean hasWords() {
-        return players.size()==wordBucket.size();
+        return players.size() == wordBucket.size();
     }
 }

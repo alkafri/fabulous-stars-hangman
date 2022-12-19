@@ -1,16 +1,17 @@
 package yh.fabulousstars.hangman.client.events;
 
+import yh.fabulousstars.hangman.game.GameInfo;
+
 import java.util.List;
 
 public class GameList extends AbstractEvent {
-    public record Game(String gameId, String name, boolean hasPassword) {}
-    private List<Game> gameList;
+    private final List<GameInfo> gameList;
 
-    public GameList(List<Game> gameList) {
+    public GameList(List<GameInfo> gameList) {
         this.gameList = gameList;
     }
 
-    public List<Game> getGameList() {
+    public List<GameInfo> getGameList() {
         return gameList;
     }
 }

@@ -29,8 +29,8 @@ public class EntityUtils {
      */
     public static Object getBlobObject(Entity entity) {
         // deserialize blob to object
-        if(entity.hasProperty(BLOB_NAME)) {
-            var blob = (Blob)entity.getProperty(BLOB_NAME);
+        if (entity.hasProperty(BLOB_NAME)) {
+            var blob = (Blob) entity.getProperty(BLOB_NAME);
             return ObjectHelper.fromBytes(blob.getBytes());
         }
         return null;
@@ -38,8 +38,8 @@ public class EntityUtils {
 
     public static byte[] getBlobBytes(Entity entity) {
         // deserialize blob to object
-        if(entity.hasProperty(BLOB_NAME)) {
-            var blob = (Blob)entity.getProperty(BLOB_NAME);
+        if (entity.hasProperty(BLOB_NAME)) {
+            var blob = (Blob) entity.getProperty(BLOB_NAME);
             return blob.getBytes();
         }
         return null;

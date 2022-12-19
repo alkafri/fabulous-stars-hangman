@@ -38,6 +38,7 @@ public class PlayState {
     public String getOpponentId() {
         return opponentId;
     }
+
     public String getCurrentWord() {
         return currentWord;
     }
