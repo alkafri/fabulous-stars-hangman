@@ -1,4 +1,4 @@
-<%@ page import="yh.fabulousstars.server.BaseServlet" %>
+<%@ page import="yh.fabulousstars.hangman.server.BaseServlet" %>
 <%@ page import="java.util.Iterator" %>
 <%@ page import="com.google.appengine.api.datastore.*" %>
 <%@ page import="java.util.List" %>

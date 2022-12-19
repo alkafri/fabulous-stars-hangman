@@ -9,6 +9,7 @@
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
 
+<?import javafx.scene.layout.RowConstraints?>
 <GridPane hgap="5.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minWidth="640.0" prefHeight="100.0" prefWidth="640.0" style="-fx-background-color: lightblue; -fx-font-family: sans-serif; -fx-font-size: 14; -fx-font-weight: bold;" vgap="5.0" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="yh.fabulousstars.hangman.GameController">
    <children>
       <Label alignment="CENTER" contentDisplay="CENTER" text="Welcome to the ultimate word guessing game." textFill="#724119" GridPane.columnIndex="0" GridPane.columnSpan="5" GridPane.halignment="CENTER" GridPane.hgrow="ALWAYS" GridPane.rowIndex="0" GridPane.vgrow="NEVER">

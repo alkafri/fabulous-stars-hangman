@@ -1,4 +1,4 @@
-package yh.fabulousstars.server;
+package yh.fabulousstars.hangman.server;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;

@@ -5,7 +5,10 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import javafx.application.Platform;
 import yh.fabulousstars.hangman.client.events.*;
+import yh.fabulousstars.hangman.game.EventObject;
 
+import java.io.ByteArrayInputStream;
+import java.io.ObjectInputStream;
 import java.net.*;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -23,7 +26,6 @@ class GameManager implements IGameManager {
     private String clientName;
     private LocalPlayer player;
     private final HttpClient http;
-    protected final Gson gson;
     private final Thread thread;
     private boolean abort = false;
 
@@ -45,9 +47,6 @@ class GameManager implements IGameManager {
                 .cookieHandler(cookieMan)
                 .version(HttpClient.Version.HTTP_2)
                 .build();
-        this.gson = new GsonBuilder()
-                .serializeNulls()
-                .create();
         this.thread = new Thread(() -> clientThread());
     }
 
@@ -69,10 +68,6 @@ class GameManager implements IGameManager {
         }
     }
 
-    private <T> T fromJson(String json) {
-        return gson.fromJson(json, new TypeToken<T>() {});
-    }
-
     /**
      * Poll for game event.
      * @return true for delay
@@ -81,10 +76,10 @@ class GameManager implements IGameManager {
         try {
             var req = HttpRequest.newBuilder(new URI(backendUrl + "/api/poll"))
                 .GET().build();
-            var resp = http.send(req, HttpResponse.BodyHandlers.ofString());
-            Map<String,String> event = fromJson(resp.body());
+            var resp = http.send(req, HttpResponse.BodyHandlers.ofByteArray());
+            var event = ObjectHelper.fromBytes(resp.body());
             if(event != null) {
-                sendEvent(event);
+                sendEvent((EventObject)event);
                 return false;
             }
         } catch (Exception e) {
@@ -101,13 +96,9 @@ class GameManager implements IGameManager {
     private void request(String method, Object body) {
         try {
             var url = backendUrl + "/api/"+method;
-            var builder = HttpRequest.newBuilder(new URI(url));
-            if(body != null) {
-                builder.PUT(HttpRequest.BodyPublishers.ofString(gson.toJson(body)));
-            } else {
-                builder.GET();
-            }
-            http.send(builder.build(), HttpResponse.BodyHandlers.discarding());
+            var req = HttpRequest.newBuilder(new URI(url))
+                .GET().build();
+            http.send(req, HttpResponse.BodyHandlers.discarding());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -208,8 +199,8 @@ class GameManager implements IGameManager {
      *
      * @param serverEvent
      */
-    void sendEvent(Map<String,String> serverEvent) {
-        IGameEvent gameEvent = switch (serverEvent.get("type")) {
+    void sendEvent(EventObject serverEvent) {
+        IGameEvent gameEvent = switch (serverEvent.getName()) {
             case "connected", "connect_error" -> getClientConnect(serverEvent);
             case "created", "create_error" -> getCreateOrJoin(serverEvent);
             case "game_list" -> getGameList(serverEvent);
@@ -233,7 +224,7 @@ class GameManager implements IGameManager {
      * @param serverEvent
      * @return SubmitGuess
      */
-    private IGameEvent getSubmitGuess(Map<String, String> serverEvent) {
+    private IGameEvent getSubmitGuess(EventObject serverEvent) {
         return new SubmitGuess(
                 serverEvent.get("correct").equals("1"),
                 serverEvent.get("guess"));
@@ -244,7 +235,7 @@ class GameManager implements IGameManager {
      * @param serverEvent
      * @return RequestWord
      */
-    private IGameEvent getRequestWord(Map<String, String> serverEvent) {
+    private IGameEvent getRequestWord(EventObject serverEvent) {
         return new RequestWord(
                 Integer.parseInt(serverEvent.get("minLength")),
                 Integer.parseInt(serverEvent.get("maxLength"))
@@ -256,7 +247,7 @@ class GameManager implements IGameManager {
      * @param serverEvent
      * @return RequestGuess
      */
-    private IGameEvent getRequestGuess(Map<String, String> serverEvent) {
+    private IGameEvent getRequestGuess(EventObject serverEvent) {
         return new RequestGuess();
     }
 
@@ -265,8 +256,8 @@ class GameManager implements IGameManager {
      * @param serverEvent
      * @return PlayerState
      */
-    private IGameEvent getPlayerState(Map<String, String> serverEvent) {
-        PlayState playState = fromJson(serverEvent.get("json")); // check
+    private IGameEvent getPlayerState(EventObject serverEvent) {
+        PlayState playState = (PlayState) serverEvent.getPayload();
         var player = (LocalPlayer)currentGame.getPlayer(playState.getClientId());
         player.setPlayState(playState);
         return new PlayerState(playState.getClientId(), playState);
@@ -277,7 +268,7 @@ class GameManager implements IGameManager {
      * @param serverEvent
      * @return ChatMessage
      */
-    private IGameEvent getChatMessage(Map<String, String> serverEvent) {
+    private IGameEvent getChatMessage(EventObject serverEvent) {
         var inGame = serverEvent.get("inGame").equals("1");
         var message = serverEvent.get("message");
         return new ChatMessage(message, inGame);
@@ -288,8 +279,8 @@ class GameManager implements IGameManager {
      * @param serverEvent
      * @return LeaveGame
      */
-    private IGameEvent getLeaveGame(Map<String, String> serverEvent) {
-        var gameId = serverEvent.get("gameId"); // TODO check that gameId prop is set correctly in server
+    private IGameEvent getLeaveGame(EventObject serverEvent) {
+        var gameId = serverEvent.get("gameId");
         currentGame = null;
         return new LeaveGame(gameId);
     }
@@ -299,8 +290,8 @@ class GameManager implements IGameManager {
      * @param serverEvent
      * @return JoinGame
      */
-    private IGameEvent getCreateOrJoin(Map<String, String> serverEvent) {
-        if(serverEvent.containsKey("error")) {
+    private IGameEvent getCreateOrJoin(EventObject serverEvent) {
+        if(serverEvent.contains("error")) {
             return new JoinOrCreate(null, serverEvent.get("error"));
         } else {
             currentGame = new LocalGame(this,
@@ -316,11 +307,12 @@ class GameManager implements IGameManager {
      * @param serverEvent
      * @return PlayerList
      */
-    private IGameEvent getPlayerList(Map<String, String> serverEvent) {
-        List<Map<String,String>> mapList = fromJson(serverEvent.get("json"));
+    private IGameEvent getPlayerList(EventObject serverEvent) {
+        List<Map<String,String>> mapList = (List<Map<String, String>>) serverEvent.getPayload();
         var gameId = serverEvent.get("gameId");
         List<IPlayer> players = new ArrayList<>();
-        if(currentGame!=null && !currentGame.getId().equals(gameId)) { // this should never happen
+        if(currentGame!=null && !currentGame.getId().equals(gameId)) {
+            // getting player list when not in game should never happen
             throw new RuntimeException("Incorrect game id!");
         }
         for (var map : mapList) {
@@ -339,8 +331,8 @@ class GameManager implements IGameManager {
      * @param serverEvent
      * @return GameList
      */
-    private IGameEvent getGameList(Map<String, String> serverEvent) {
-        List<Map<String,String>> mapList = fromJson(serverEvent.get("json"));
+    private IGameEvent getGameList(EventObject serverEvent) {
+        List<Map<String,String>> mapList = (List<Map<String, String>>) serverEvent.getPayload();
         List<GameList.Game> games = new ArrayList<>();
         for (var map : mapList) {
             games.add(new GameList.Game(
@@ -358,8 +350,8 @@ class GameManager implements IGameManager {
      * @param serverEvent
      * @return ClientConnect
      */
-    private IGameEvent getClientConnect(Map<String, String> serverEvent) {
-        if(serverEvent.containsKey("error")) {
+    private IGameEvent getClientConnect(EventObject serverEvent) {
+        if(serverEvent.contains("error")) {
             return new ClientConnect(null, serverEvent.get("error"));
         }
         else {

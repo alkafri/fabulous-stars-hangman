@@ -1,15 +1,16 @@
-package yh.fabulousstars.server.game;
+package yh.fabulousstars.hangman.game;
 
+import java.io.Serializable;
 import java.util.*;
 
 /**
  * The game state holds the actual state of the game.
  * GameLogics methods operate on GameState instances.
  */
-public class GameState {
+public class GameState implements Serializable {
     private boolean started;
-    private HashMap<String,String> wordBucket;
-    private HashMap<String, PlayState> players;
+    private final HashMap<String, String> wordBucket;
+    private final HashMap<String, PlayState> players;
 
     public GameState() {
         this.wordBucket = new HashMap<>();
@@ -18,35 +19,11 @@ public class GameState {
     }
 
     void setPlayerWord(String clientId, String word) {
-
         wordBucket.put(clientId, word.toUpperCase());
     }
 
-    /**
-     * Get random word from bucket for each player not belonging to player.
-     */
-    void chooseWords() {
-        // map of clientId -> word
-        var opponentIds = new ArrayList<>(wordBucket.keySet());
-        Collections.shuffle(opponentIds); // shuffle word order
-        // choose word for each player
-        for (var player : getPlayers()) {
-            // get first word not belonging to player
-            for (int i = 0; i < opponentIds.size(); i++) {
-                var opponentId = opponentIds.get(i);
-                if(!opponentId.equals(player.getClientId())) {
-                    // set word
-                    player.setCurrentWord(opponentId, wordBucket.get(opponentId));
-                    // remove used word from bucket
-                    opponentIds.remove(opponentId);
-                    break;
-                }
-            }
-        }
-    }
-
-    void removeWord(String clientId) {
-        wordBucket.remove(clientId);
+    public HashMap<String, String> getWordBucket() {
+        return wordBucket;
     }
 
     public List<PlayState> getPlayers() {

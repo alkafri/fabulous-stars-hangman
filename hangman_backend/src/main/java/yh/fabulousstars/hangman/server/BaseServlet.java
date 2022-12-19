@@ -1,12 +1,13 @@
-package yh.fabulousstars.server;
+package yh.fabulousstars.hangman.server;
 
 import com.google.appengine.api.datastore.*;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import yh.fabulousstars.server.game.GameState;
+import yh.fabulousstars.hangman.game.EventObject;
+import yh.fabulousstars.hangman.game.GameState;
+import yh.fabulousstars.hangman.server.utils.EntityUtils;
 
 import javax.servlet.ServletException;
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -51,7 +52,6 @@ public abstract class BaseServlet extends HttpServlet {
         var path = req.getPathInfo();
         var endpoint = path != null ? req.getPathInfo().substring(1) : "";
         if (endpoints.contains(endpoint)) {
-            resp.setHeader("Content-Type", "application/json");
             return new RequestContext(endpoint, session.getId(), req, resp);
         }
         throw new FileNotFoundException(endpoint);
@@ -127,15 +127,11 @@ public abstract class BaseServlet extends HttpServlet {
      * @return
      */
     protected GameState getGameState(String gameId) {
-        var stateEntity = getEntity(GAME_STATE_TYPE, gameId);
-        var bytes = (byte[])stateEntity.getProperty("state");
-         try(ByteArrayInputStream byteInout = new ByteArrayInputStream(bytes)) {
-             var objectInput = new ObjectInputStream(byteInout);
-             return (GameState) objectInput.readObject();
-         } catch (Exception ex) {
-             ex.printStackTrace();
-         }
-         return null;
+        var entity = getEntity(GAME_STATE_TYPE, gameId);
+        if(entity!=null) {
+            return (GameState)EntityUtils.getBlobObject(entity);
+        }
+        return null;
     }
 
     /**
@@ -144,15 +140,9 @@ public abstract class BaseServlet extends HttpServlet {
      * @return
      */
     protected void putGameState(String gameId, GameState gameState) {
-        try(ByteArrayOutputStream byteOutput = new ByteArrayOutputStream()) {
-            var objectOutput = new ObjectOutputStream(byteOutput);
-            objectOutput.writeObject(gameState);
-            var entity = new Entity(GAME_STATE_TYPE, gameId);
-            entity.setProperty("state", byteOutput.toByteArray());
-            datastore.put(entity);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
+        var entity = new Entity(GAME_STATE_TYPE, gameId);
+        EntityUtils.putBlobObject(entity, gameState);
+        datastore.put(entity);
     }
 
     /**
@@ -172,7 +162,7 @@ public abstract class BaseServlet extends HttpServlet {
      * @return list of ids
      */
     protected List<String> getAllIds(String type) {
-        var ids = new LinkedList<String>();
+        var ids = new ArrayList<String>();
         var iter = datastore.prepare(new Query(type).setKeysOnly()).asIterator();
         while(iter.hasNext()) {
             var entity = iter.next();
@@ -185,15 +175,13 @@ public abstract class BaseServlet extends HttpServlet {
      * Add event to database for polling.
      *
      * @param clientId target client.
-     * @param eventName String id fro event.
-     * @param data event data.
+     * @param event Event object
      */
-    protected void addEvent(String clientId, String eventName, Map<String, String> data) {
+    protected void addEvent(String clientId, EventObject event) {
         var entity = new Entity(EVENT_TYPE);
-        entity.setProperty("targetId", clientId); // client
-        entity.setProperty("created", System.currentTimeMillis());
-        entity.setProperty("type", eventName);
-        setProperties(entity, data);
+        entity.setProperty("eTargetId", clientId); // client
+        entity.setProperty("eCreated", System.currentTimeMillis());
+        EntityUtils.putBlobObject(entity, event);
         datastore.put(entity);
     }
 
@@ -209,18 +197,20 @@ public abstract class BaseServlet extends HttpServlet {
         // query first
         var entityIter = datastore.prepare(
                 new Query(EVENT_TYPE)
-                        .addSort("created")
+                        .setFilter(new Query.FilterPredicate(
+                                "eTargetId", Query.FilterOperator.EQUAL, ctx.session())
+                        )
+                        .addSort("eCreated")
         ).asIterator();
         if (entityIter.hasNext()) {
             var entity = entityIter.next();
-            var map = getStringProperties(entity);
-            // remove backend info
-            map.remove("targetId");
-            map.remove("created");
-            // send
-            objectToJsonStream(ctx, map);
-            // remove from db
+            var bytes = EntityUtils.getBlobBytes(entity);
             datastore.delete(entity.getKey());
+            ctx.resp().setContentType("application/octet-stream");
+            var output = ctx.resp().getOutputStream();
+            ctx.resp().setContentLength(bytes.length);
+            output.write(bytes);
+            output.flush();
         }
     }
 

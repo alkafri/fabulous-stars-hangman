@@ -1,11 +1,12 @@
-package yh.fabulousstars.server.game;
+package yh.fabulousstars.hangman.game;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
 /**
  * Player play state.
  */
-public class PlayState {
+public class PlayState implements Serializable {
     public static final int WAIT_FOR_START = 0;
     public static final int SUBMIT_WORD = 1;
     public static final int WAIT_FOR_TURN = 2;

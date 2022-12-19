@@ -12,7 +12,6 @@ import yh.fabulousstars.hangman.client.IGameEvent;
 import yh.fabulousstars.hangman.client.IGameManager;
 import yh.fabulousstars.hangman.client.IPlayer;
 import yh.fabulousstars.hangman.client.events.*;
-import yh.fabulousstars.hangman.client.GameClient;
 import yh.fabulousstars.hangman.gui.DialogHelper;
 import yh.fabulousstars.hangman.gui.GameStage;
 

@@ -1,11 +1,37 @@
-package yh.fabulousstars.server.game;
+package yh.fabulousstars.hangman.game;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public final class GameLogics {
 
     private static int MAX_DAMAGE = 11;
+
+    /**
+     * Get random word from bucket for each player not belonging to player.
+     */
+    static void chooseWords(Map<String, String> wordBucket, List<PlayState> players) {
+        // map of clientId -> word
+        var opponentIds = new ArrayList<>(wordBucket.keySet());
+        Collections.shuffle(opponentIds); // shuffle word order
+        // choose word for each player
+        for (var player : players) {
+            // get first word not belonging to player
+            for (int i = 0; i < opponentIds.size(); i++) {
+                var opponentId = opponentIds.get(i);
+                if(!opponentId.equals(player.getClientId())) {
+                    // set word
+                    player.setCurrentWord(opponentId, wordBucket.get(opponentId));
+                    // remove used word from bucket
+                    opponentIds.remove(opponentId);
+                    break;
+                }
+            }
+        }
+    }
+
     /**
      *
      * @param gameState
@@ -96,17 +122,19 @@ public final class GameLogics {
     }
 
     /**
-     *
+     * Set player word.
+     * Guessing starts when all words are set.
      * @param gameState
      * @param clientId
      * @param word
-     * @return changed states
+     * @return changed states or null.
      */
     public static List<PlayState> setWord(GameState gameState, String clientId, String word) {
         gameState.setPlayerWord(clientId, word);
+        var players = gameState.getPlayers();
         if(gameState.hasWords()) {
-            gameState.chooseWords();
-            return gameState.getPlayers();
+            chooseWords(gameState.getWordBucket(), players);
+            return players;
         }
         return null;
     }
