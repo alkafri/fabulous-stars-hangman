@@ -26,6 +26,7 @@ public class GameApplication extends Application {
         Scene scene = new Scene(fxmlLoader.load(), Color.GRAY);
         stage.setTitle("Hangman!");
         stage.setScene(scene);
+        stage.setResizable(false);
         stage.show();
     }
 }

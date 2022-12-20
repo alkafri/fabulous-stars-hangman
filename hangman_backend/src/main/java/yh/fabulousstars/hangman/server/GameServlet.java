@@ -17,6 +17,8 @@ import java.util.*;
 @WebServlet(name = "GameServlet", value = "/api/*")
 public class GameServlet extends BaseServlet {
     private static final int MAX_PLAYERS_PER_GAME = 6;
+    private static final int MIN_WORD_LENGTH = 4;
+    private static final int MAX_WORD_LENGTH = 20;
 
     public GameServlet() {
         super();
@@ -70,7 +72,7 @@ public class GameServlet extends BaseServlet {
                 gameState.setStarted(true);
                 // initial events
                 var startedEvent = new EventObject("game_started");
-                var wordEvent = new EventObject("request_word");
+                var wordEvent = getRequestWordEvent();
                 // players
                 var players = gameState.getPlayerEntries();
                 // send events to participants
@@ -84,6 +86,19 @@ public class GameServlet extends BaseServlet {
     }
 
     /**
+     * Return word request with random length span.
+     * @return
+     */
+    private EventObject getRequestWordEvent() {
+        var wordEvent = new EventObject("request_word");
+        int offset = (int)(Math.random()*3);
+        int max = MIN_WORD_LENGTH + (int)(Math.random() * (MAX_WORD_LENGTH-offset - MIN_WORD_LENGTH));
+        wordEvent.put("minLength", String.valueOf(MIN_WORD_LENGTH+offset));
+        wordEvent.put("maxLength", String.valueOf(max));
+        return wordEvent;
+    }
+
+    /**
      * Leave game and refresh player list for participants.
      * <p>
      * events: list_players, leave
@@ -91,28 +106,43 @@ public class GameServlet extends BaseServlet {
      * @param ctx
      */
     private void gameLeave(RequestContext ctx) {
-        // get player
-        var player = getEntity(PLAYER_TYPE, ctx.session());
-        if (player == null) {
-            return;
+        // get players
+        var entities = getPlayerEntities(ctx);
+        // player
+        var clientId = ctx.session();
+        Entity player=null;
+        for(var entity : entities) {
+            if(entity.getKey().getName().equals(clientId)) {
+                player = entity;
+                break;
+            }
         }
+        if(player==null) { return; }
         // get game id
-        var gameId = player.getProperty("gameId").toString();
-        if (gameId == null) {
-            return;
-        }
+        var gameId = (String)player.getProperty("gameId");
         // clear game id from player
         player.setProperty("gameId", null);
         datastore.put(player);
+        var state = getGameState(gameId);
+        state.removePlayer(clientId);
+        putGameState(gameId, state);
         // update player list
-        listGamePlayers(ctx, gameId, "list_players");
-
+        listGamePlayers(gameId);
+        // to player
         var event = new EventObject("leave");
         event.put("gameId", gameId);
+        event.put("clientId", ctx.session());
         addEvent(ctx.session(), event);
+        listPlayers(ctx, true);
+        // to remaining participants
+        for(var entity : entities) {
+            if(!entity.getKey().getName().equals(clientId)) {
+                addEvent(ctx.session(), event);
+            }
+        }
     }
 
-    private void listGamePlayers(RequestContext ctx, String gameId, String eventName) {
+    private void listGamePlayers(String gameId) {
         // get players in game
         var query = new Query(PLAYER_TYPE)
                 .setKeysOnly()
@@ -127,7 +157,7 @@ public class GameServlet extends BaseServlet {
             ));
         }
         // create event containing players
-        var event = new EventObject(eventName);
+        var event = new EventObject("player_list");
         event.put("gameId", gameId);
         event.setPayload(players);
         // broadcast event to participants
@@ -159,6 +189,7 @@ public class GameServlet extends BaseServlet {
                 entity.setProperty("gameId", null);
                 event.put("name", name);
                 event.put("gameId", null);
+                event.put("clientId", clientId);
                 // store in db
                 setExpiry(entity);
                 datastore.put(entity);
@@ -273,10 +304,11 @@ public class GameServlet extends BaseServlet {
                     playerEntity.setProperty("gameId", gameId);
                     datastore.put(playerEntity);
                     // send join event
-                    var event = new EventObject("join", getStringProperties(gameEntity));
+                    var event = new EventObject("join");
+                    event.put("name", (String) gameEntity.getProperty("name"));
                     event.put("gameId", gameId);
                     addEvent(clientId, event);
-                    listGamePlayers(ctx, gameId, "player_list");
+                    listPlayers(ctx, true);
                     return;
                 }
             } catch (Exception ex) {
@@ -365,10 +397,10 @@ public class GameServlet extends BaseServlet {
     private void listGames(RequestContext ctx, boolean broadcast) {
         // results
         var games = new ArrayList<GameInfo>();
-        // iterate database games
+        // iterate games
         var iter = datastore.prepare(new Query(GAME_TYPE)).asIterator();
         while (iter.hasNext()) {
-            var entity = iter.next(); // get datastore entity
+            var entity = iter.next(); // get game entity
             var pass = (String) entity.getProperty("password");
             games.add(new GameInfo(
                     entity.getKey().getName(),
@@ -376,15 +408,16 @@ public class GameServlet extends BaseServlet {
                     pass != null
             ));
         }
+        // list event
         var event = new EventObject("game_list");
         event.setPayload(games);
         if (broadcast) {
-            // broadcast pollable event
+            // broadcast to all
             for (var id : getAllIds(PLAYER_TYPE)) {
                 addEvent(id, event);
             }
         } else {
-            // create pollable event for caller
+            // send to caller
             addEvent(ctx.session(), event);
         }
     }
@@ -418,7 +451,6 @@ public class GameServlet extends BaseServlet {
             addEvent(ctx.session(), event);
         }
     }
-
     private List<Entity> getPlayerEntities(RequestContext ctx) {
         var playerEntity = getEntity(PLAYER_TYPE, ctx.session());
         // get game id

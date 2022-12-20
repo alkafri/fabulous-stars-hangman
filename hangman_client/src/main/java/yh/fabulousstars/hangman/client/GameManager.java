@@ -155,9 +155,11 @@ class GameManager implements IGameManager {
 
     @Override
     public void disconnect() {
-        request("disconnect");
-        currentGame = null;
-        player = null;
+        if(player!=null) {
+            request("disconnect");
+            currentGame = null;
+            player = null;
+        }
         abort = true;
     }
 
@@ -235,10 +237,9 @@ class GameManager implements IGameManager {
     void sendEvent(EventObject serverEvent) {
         IGameEvent gameEvent = switch (serverEvent.getName()) {
             case "connected", "connect_error" -> getClientConnect(serverEvent);
-            case "created", "create_error" -> getCreateOrJoin(serverEvent);
+            case "created", "create_error", "join", "join_error"-> getCreateOrJoin(serverEvent);
             case "game_list" -> getGameList(serverEvent);
             case "player_list" -> getPlayerList(serverEvent);
-            case "join", "join_error" -> getCreateOrJoin(serverEvent);
             case "leave" -> getLeaveGame(serverEvent);
             case "message" -> getChatMessage(serverEvent);
             case "game_started" -> getGameStarted(serverEvent);
@@ -326,7 +327,11 @@ class GameManager implements IGameManager {
      */
     private IGameEvent getLeaveGame(EventObject serverEvent) {
         var gameId = serverEvent.get("gameId");
-        currentGame = null;
+        if(serverEvent.get("clientId").equals(player.getClientId())) {
+            currentGame = null;
+            player.setGame(null);
+            player.setPlayState(null);
+        }
         return new LeaveGame(gameId);
     }
 
@@ -362,15 +367,17 @@ class GameManager implements IGameManager {
             // getting player list when not in game should never happen
             throw new RuntimeException("Incorrect game id!");
         }
-        players.add(player);
         for (var playerInf : infList) {
-            if(playerInf.getClientId().equals(player.getClientId())) { continue; }
-            players.add(new LocalPlayer(
-                    this,
-                    currentGame,
-                    playerInf.getName(),
-                    playerInf.getClientId()
-            ));
+            if(playerInf.getClientId().equals(player.getClientId())) {
+                players.add(player);
+            } else {
+                players.add(new LocalPlayer(
+                        this,
+                        currentGame,
+                        playerInf.getName(),
+                        playerInf.getClientId()
+                ));
+            }
         }
         return new PlayerList(players, gameId != null);
     }

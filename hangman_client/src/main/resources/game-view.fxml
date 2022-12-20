@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<VBox fx:id="rootView" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1" fx:controller="yh.fabulousstars.hangman.gui.GameController">
+   <children>
+      <Pane fx:id="canvasContainer" maxHeight="720.0" maxWidth="1440.0" minHeight="360.0" minWidth="480.0" prefHeight="360.0" prefWidth="480.0">
+      </Pane>
+      <HBox alignment="CENTER" style="-fx-background-color: wheat;" VBox.vgrow="NEVER">
+         <children>
+            <Label alignment="CENTER" maxHeight="1.7976931348623157E308" text="Guess:">
+               <HBox.margin>
+                  <Insets right="10.0" />
+               </HBox.margin>
+               <font>
+                  <Font name="System Bold" size="12.0" />
+               </font>
+            </Label>
+            <TextField fx:id="guessTextField" alignment="CENTER" maxWidth="70.0" promptText="guess..." style="-fx-background-color: yellow;" />
+         </children>
+         <padding>
+            <Insets bottom="10.0" top="10.0" />
+         </padding>
+      </HBox>
+      <GridPane hgap="5.0" vgap="5.0">
+        <columnConstraints>
+          <ColumnConstraints hgrow="NEVER" />
+          <ColumnConstraints hgrow="NEVER" />
+        </columnConstraints>
+        <rowConstraints>
+          <RowConstraints maxHeight="120.0" vgrow="SOMETIMES" />
+          <RowConstraints vgrow="NEVER" />
+        </rowConstraints>
+         <children>
+            <ListView fx:id="playerListView" minHeight="100.0" minWidth="160.0" prefHeight="100.0" prefWidth="160.0" GridPane.columnIndex="1" GridPane.hgrow="NEVER" GridPane.vgrow="NEVER">
+               <GridPane.margin>
+                  <Insets />
+               </GridPane.margin></ListView>
+            <ListView fx:id="chatListView" GridPane.hgrow="SOMETIMES" GridPane.vgrow="NEVER" />
+            <TextField fx:id="chatTextField" promptText="say..." GridPane.hgrow="ALWAYS" GridPane.rowIndex="1" GridPane.vgrow="NEVER" />
+            <Button fx:id="startButton" mnemonicParsing="false" text="Start" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowIndex="1" />
+         </children>
+         <padding>
+            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+         </padding>
+      </GridPane>
+   </children>
+</VBox>

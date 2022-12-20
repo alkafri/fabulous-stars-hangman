@@ -7,7 +7,7 @@
           minWidth="640.0" prefHeight="100.0"
           prefWidth="640.0"
           style="-fx-background-color: lightblue; -fx-font-family: sans-serif; -fx-font-size: 14; -fx-font-weight: bold;" vgap="5.0" xmlns="http://javafx.com/javafx/19"
-          fx:controller="yh.fabulousstars.hangman.GameController">
+          fx:controller="yh.fabulousstars.hangman.LobbyController">
     <children>
         <Label alignment="CENTER" contentDisplay="CENTER" text="Welcome to the ultimate word guessing game."
                textFill="#724119" GridPane.columnIndex="0" GridPane.columnSpan="5" GridPane.halignment="CENTER"
@@ -43,7 +43,7 @@
         <Button fx:id="joinButton" onAction="#onJoinButtonClick" text="Join" GridPane.columnIndex="4"
                 GridPane.rowIndex="6"/>
 
-        <ListView fx:id="lobbyChat" minHeight="120.0" GridPane.columnSpan="3" GridPane.hgrow="ALWAYS"
+        <ListView fx:id="chatListView" minHeight="120.0" GridPane.columnSpan="3" GridPane.hgrow="ALWAYS"
                   GridPane.rowIndex="7" GridPane.rowSpan="2" GridPane.vgrow="NEVER">
             <GridPane.margin>
                 <Insets top="10.0"/>
