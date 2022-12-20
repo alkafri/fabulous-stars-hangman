@@ -4,6 +4,7 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The game state holds the actual state of the game.
@@ -30,7 +31,10 @@ public class GameState implements Serializable {
         return wordBucket;
     }
 
-    public List<PlayState> getPlayers() {
+    public List<Map.Entry<String,PlayState>> getPlayerEntries() {
+        return players.entrySet().stream().toList();
+    }
+    public List<PlayState> getPlayerStates() {
         return players.values().stream().toList();
     }
 

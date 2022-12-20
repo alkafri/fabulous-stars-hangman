@@ -133,7 +133,7 @@ public final class GameLogics {
      */
     public static List<PlayState> setWord(GameState gameState, String clientId, String word) {
         gameState.setPlayerWord(clientId, word);
-        var players = gameState.getPlayers();
+        var players = gameState.getPlayerStates();
         if (gameState.hasWords()) {
             chooseWords(gameState.getWordBucket(), players);
             return players;

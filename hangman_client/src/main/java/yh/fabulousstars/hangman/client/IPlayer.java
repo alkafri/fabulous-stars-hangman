@@ -43,4 +43,9 @@ public interface IPlayer {
      * @param value
      */
     void submitGuess(String value);
+
+    /**
+     * Say something in chat.
+     */
+    void say(String message);
 }

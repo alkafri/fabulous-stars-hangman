@@ -38,6 +38,8 @@ public class GameController implements Initializable {
     @FXML
     public TextField joinPasswordField;
     @FXML
+    public TextField chatInput;
+    @FXML
     public ListView<GameInfo> gameListView;
     @FXML
     public ListView<IPlayer> playerListView;
@@ -92,6 +94,7 @@ public class GameController implements Initializable {
             if (section.equals(UISection.Connect)) {
                 connectButton.setDisable(!enabled);
                 playerNameField.setDisable(!enabled);
+                chatInput.setDisable(enabled);
             } else if (section.equals(UISection.Create)) {
                 gameNameField.setDisable(!enabled);
                 joinPasswordField.setDisable(!enabled);
@@ -164,7 +167,9 @@ public class GameController implements Initializable {
             }
         });
         playerListView.setItems(playerList);
+
         lobbyChat.setItems(chatList);
+        chatInput.setOnAction(this::onChatInput);
 
         //Keeps the canvas size updated
 
@@ -174,6 +179,14 @@ public class GameController implements Initializable {
         GameApplication.getAppStage().setOnCloseRequest(windowEvent -> {
             gameManager.shutdown();
         });
+    }
+
+    private void onChatInput(ActionEvent actionEvent) {
+        var message = chatInput.getText().trim();
+        chatInput.clear();
+        if(!message.isEmpty()) {
+            gameManager.getClient().say(message);
+        }
     }
 
     private void handleGameEvent(IGameEvent event) {

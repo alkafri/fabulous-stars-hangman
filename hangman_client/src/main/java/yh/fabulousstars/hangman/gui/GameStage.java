@@ -8,13 +8,14 @@ import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.*;
-import javafx.scene.image.Image;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.media.MediaPlayer;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import yh.fabulousstars.hangman.GameApplication;
+import yh.fabulousstars.hangman.MediaHelper;
 import yh.fabulousstars.hangman.client.IGame;
 import yh.fabulousstars.hangman.client.IPlayer;
 import yh.fabulousstars.hangman.client.events.*;
@@ -23,19 +24,19 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class GameStage extends Stage {
-
+    private static final int IMAGE_STATES = 11;
     private static final double CANVAS_WIDTH = 480;
     private static final double CANVAS_HEIGHT = 360;
     private final IGame game;
     private final Map<String, CanvasWrapper> canvasMap;
-    private final Image[] stateImages;
-    private final Image blackBarImage;
     private final VBox canvasRows;
     private final TextField guessField;
     private final ListView<String> chatListView;
     private final ObservableList<String> chatList;
     private final TextField chatField;
     private final Button startButton;
+    private final MediaHelper media;
+    private final MediaPlayer music;
 
     private boolean isRunning;
 
@@ -44,28 +45,12 @@ public class GameStage extends Stage {
         this.isRunning = false;
         this.canvasMap = new HashMap<>();
         this.chatList = FXCollections.observableArrayList();
+        this.media = MediaHelper.getInstance();
+        this.music = this.media.getMedia("8-bit-brisk-music-loop");
+        this.music.setVolume(0.3);
 
         initOwner(GameApplication.getAppStage());
         setTitle("Hangman");
-
-        // load images
-        var images = Arrays.asList(
-                "HangmanTranState1.png",
-                "HangmanTranState2.png",
-                "HangmanTranState3.png",
-                "HangmanTranState4.png",
-                "HangmanTranState5.png",
-                "HangmanTranState6.png",
-                "HangmanTranState7.png",
-                "HangmanTranState8.png",
-                "HangmanTranState9.png",
-                "HangmanTranState10.png",
-                "HangmanTranState11.png");
-        this.stateImages = new Image[images.size()];
-        for (int i = 0; i < stateImages.length; i++) {
-            this.stateImages[i] = new Image(images.get(i));
-        }
-        blackBarImage = new Image("BlackBarTR.png");
 
         // root layout
         VBox root = new VBox();
@@ -94,6 +79,7 @@ public class GameStage extends Stage {
         chatListView = new ListView<>();
         chatListView.setMaxWidth(1000);
         chatListView.setPrefHeight(100);
+        chatListView.setItems(chatList);
         chatField = new TextField();
         chatField.setOnAction(this::onLineTyped);
         chatField.setMaxWidth(1000);
@@ -110,7 +96,10 @@ public class GameStage extends Stage {
     }
 
     private void onLineTyped(ActionEvent actionEvent) {
-        // todo: chat
+        var message = chatField.getText();
+        chatField.clear();
+        game.getManager().getClient().say(message);
+        media.getSound("button").play();
     }
 
     private void onStartButton(ActionEvent actionEvent) {
@@ -136,19 +125,27 @@ public class GameStage extends Stage {
     }
 
     public void handleGameStarted(GameStarted event) {
+        startButton.setVisible(false);
+        music.play();
         for (var wrapper : canvasMap.values()) {
             canvasBackground(wrapper);
         }
     }
 
     public void handleSubmitGuess(SubmitGuess event) {
-        //todo handleSubmitGuess
+        if(event.isCorrect()) {
+            media.getSound("button").play();
+        } else {
+            media.getSound("error").play();
+        }
     }
 
     public void handlePlayerList(PlayerList event) {
     }
 
     public void handleChatMessage(ChatMessage event) {
+        chatList.add(0, event.getMessage());
+        media.getSound("button").play();
     }
 
     /**
@@ -207,7 +204,9 @@ public class GameStage extends Stage {
         GraphicsContext gc = wrapper.canvas.getGraphicsContext2D();
 
         // if self
-        if(game.getManager().getClient().getClientId().equals(wrapper.player.getClientId())) {
+        var local = game.getManager().getClient().getClientId();
+        var wrapped = wrapper.player.getClientId();
+        if(local == wrapped) {
             gc.setFill(Color.LIGHTSKYBLUE);
         } else {
             gc.setFill(Color.LIGHTCORAL);
@@ -244,7 +243,7 @@ public class GameStage extends Stage {
         //Prints the image same amount of times as a word has letters
         var letterCount = wrapper.player.getPlayState().getCurrentWord().length();
         for (int i = 0; letterCount > i; i++) {
-            gc.drawImage(blackBarImage, barSize * i * 1.5, wrapper.canvas.getHeight() * 0.8, barSize, wrapper.canvas.getHeight() * 0.01);
+            gc.drawImage(media.getImage("BlackBarTR"), barSize * i * 1.5, wrapper.canvas.getHeight() * 0.8, barSize, wrapper.canvas.getHeight() * 0.01);
         }
     }
 
@@ -257,11 +256,13 @@ public class GameStage extends Stage {
 
         GraphicsContext gc = wrapper.canvas.getGraphicsContext2D();
         var state = wrapper.player.getPlayState();
-        var damage = state == null ? 0 : state.getTotalDamage();
-        if (damage >= stateImages.length) {
-            damage = stateImages.length - 1;
+        var damage = state == null ? 1 : state.getTotalDamage()+1;
+        if (damage > IMAGE_STATES) {
+            damage = IMAGE_STATES;
         }
-        gc.drawImage(stateImages[damage], 0, 10, wrapper.canvas.getWidth() * 0.3, wrapper.canvas.getHeight() * 0.5);
+        gc.drawImage(media.getImage("HangmanTranState"+damage),
+                0, 10,
+                wrapper.canvas.getWidth() * 0.3, wrapper.canvas.getHeight() * 0.5);
     }
 
     public void addWrongLetter(CanvasWrapper wrapper) {
@@ -307,7 +308,6 @@ public class GameStage extends Stage {
 
     public void addCorrectLetter(CanvasWrapper wrapper) {
 
-
         int maxBarSize = 60;
         int barWidth = (int) (wrapper.canvas.getWidth() * 0.01);
         int barHeight = (int) (wrapper.canvas.getHeight() * 0.02);
@@ -351,6 +351,9 @@ public class GameStage extends Stage {
         if (guess.length() == 1) {
             // send to server
             game.getManager().getClient().submitGuess(guess);
+            media.getSound("button").play();
+        } else {
+            media.getSound("error").play();
         }
     }
 

@@ -5,9 +5,11 @@ class LocalPlayer implements IPlayer {
     private final String name;
 
     private LocalGame game;
+    private final GameManager manager;
     private PlayState playState;
 
-    LocalPlayer(LocalGame game, String name, String clientId) {
+    LocalPlayer(GameManager manager, LocalGame game, String name, String clientId) {
+        this.manager = manager;
         this.clientId = clientId;
         this.game = game;
         this.name = name;
@@ -44,14 +46,19 @@ class LocalPlayer implements IPlayer {
     @Override
     public void submitWord(String value) {
         if (game != null) {
-            game.getClient().submitWord(value);
+            manager.submitWord(value);
         }
     }
 
     @Override
     public void submitGuess(String value) {
         if (game != null) {
-            game.getClient().submitGuess(value);
+            manager.submitGuess(value);
         }
+    }
+
+    @Override
+    public void say(String message) {
+        manager.say(message);
     }
 }

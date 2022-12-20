@@ -22,7 +22,7 @@ public class GameApplication extends Application {
     @Override
     public void start(Stage stage) throws IOException {
         appStage = stage;
-        FXMLLoader fxmlLoader = new FXMLLoader(GameApplication.class.getResource("main-view.fxml"));
+        FXMLLoader fxmlLoader = new FXMLLoader(GameApplication.class.getResource("/main-view.fxml"));
         Scene scene = new Scene(fxmlLoader.load(), Color.GRAY);
         stage.setTitle("Hangman!");
         stage.setScene(scene);

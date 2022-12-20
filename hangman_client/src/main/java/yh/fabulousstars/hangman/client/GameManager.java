@@ -10,6 +10,7 @@ import java.net.*;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -99,15 +100,17 @@ class GameManager implements IGameManager {
      *
      * @param method Api method.
      */
-    private void request(String method) {
+    private boolean request(String method) {
         try {
             var url = backendUrl + "/api/" + method;
             var req = HttpRequest.newBuilder(new URI(url))
                     .GET().build();
             http.send(req, HttpResponse.BodyHandlers.discarding());
+            return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            e.printStackTrace(); // todo: silence
         }
+        return false;
     }
 
     @Override
@@ -122,9 +125,7 @@ class GameManager implements IGameManager {
 
     @Override
     public void createGame(String name, String password) {
-        var gameName = URLEncoder.encode(name, StandardCharsets.UTF_8);
-        var gamePassword = URLEncoder.encode(password, StandardCharsets.UTF_8);
-        request(String.format("create?name=%s&password=%s", gameName, gamePassword));
+        request(String.format("create?name=%s&password=%s", enc(name), enc(password)));
     }
 
     @Override
@@ -135,13 +136,20 @@ class GameManager implements IGameManager {
     @Override
     public void connect(String name) {
         // url encode
-        clientName = URLEncoder.encode(name, StandardCharsets.UTF_8);
+        clientName = name;
         // make connect request
-        request(String.format("connect?name=%s", clientName));
-        // start polling
-        if (!thread.isAlive()) {
-            abort = false;
-            thread.start();
+        if(request(String.format("connect?name=%s", enc(clientName)))) {
+            // start polling
+            if (!thread.isAlive()) {
+                abort = false;
+                thread.start();
+            }
+        } else {
+            Platform.runLater(() -> {
+                var event = new EventObject("connect_error");
+                event.put("error", "Connection error.");
+                sendEvent(event);
+            });
         }
     }
 
@@ -163,7 +171,7 @@ class GameManager implements IGameManager {
             if (password == null) {
                 password = "";
             }
-            request(String.format("join?game=%s&pass=%s", gameId, password));
+            request(String.format("join?game=%s&pass=%s", gameId, enc(password)));
         }
     }
 
@@ -186,7 +194,7 @@ class GameManager implements IGameManager {
      * @param value
      */
     public void submitWord(String value) {
-        request(String.format("word?str=%s", value));
+        request(String.format("word?str=%s", enc(value)));
     }
 
     /**
@@ -195,7 +203,21 @@ class GameManager implements IGameManager {
      * @param value
      */
     public void submitGuess(String value) {
-        request(String.format("guess?str=%s", value));
+        request(String.format("guess?str=%s", enc(value)));
+    }
+
+    public void say(String message) {
+        message = message.strip();
+        if(!message.isEmpty()) {
+            request(String.format("say?str=%s", enc(message)));
+        }
+    }
+
+    private String enc(String value) {
+        return URLEncoder.encode(
+                value,
+                Charset.defaultCharset()
+        );
     }
 
     /**
@@ -219,6 +241,7 @@ class GameManager implements IGameManager {
             case "join", "join_error" -> getCreateOrJoin(serverEvent);
             case "leave" -> getLeaveGame(serverEvent);
             case "message" -> getChatMessage(serverEvent);
+            case "game_started" -> getGameStarted(serverEvent);
             case "play_state" -> getPlayerState(serverEvent);
             case "submit_guess" -> getSubmitGuess(serverEvent);
             case "request_word" -> getRequestWord(serverEvent);
@@ -229,6 +252,10 @@ class GameManager implements IGameManager {
         if (gameEvent != null) {
             Platform.runLater(() -> handler.handleGameEvent(gameEvent));
         }
+    }
+
+    private IGameEvent getGameStarted(EventObject serverEvent) {
+        return new GameStarted();
     }
 
     /**
@@ -335,13 +362,15 @@ class GameManager implements IGameManager {
             // getting player list when not in game should never happen
             throw new RuntimeException("Incorrect game id!");
         }
+        players.add(player);
         for (var playerInf : infList) {
-            var player = new LocalPlayer(
+            if(playerInf.getClientId().equals(player.getClientId())) { continue; }
+            players.add(new LocalPlayer(
+                    this,
                     currentGame,
                     playerInf.getName(),
                     playerInf.getClientId()
-            );
-            players.add(player);
+            ));
         }
         return new PlayerList(players, gameId != null);
     }
@@ -368,7 +397,7 @@ class GameManager implements IGameManager {
         } else {
             var id = serverEvent.get("clientId");
             var name = serverEvent.get("name");
-            player = new LocalPlayer(null, name, id);
+            player = new LocalPlayer(this, null, name, id);
             return new ClientConnect(player, null);
         }
     }
