@@ -17,9 +17,6 @@ import java.util.*;
 @WebServlet(name = "GameServlet", value = "/api/*")
 public class GameServlet extends BaseServlet {
     private static final int MAX_PLAYERS_PER_GAME = 6;
-    private static final int MIN_WORD_LENGTH = 4;
-    private static final int MAX_WORD_LENGTH = 20;
-
     public GameServlet() {
         super();
     }
@@ -69,34 +66,14 @@ public class GameServlet extends BaseServlet {
             var gameState = getGameState(gameId);
             if (gameState != null) {
                 // set started
-                gameState.setStarted(true);
-                // initial events
-                var startedEvent = new EventObject("game_started");
-                var wordEvent = getRequestWordEvent();
-                // players
-                var players = gameState.getPlayerEntries();
-                // send events to participants
-                for (var player : players) {
-                    var target = player.getKey();
-                    addEvent(target, startedEvent);
-                    addEvent(target, wordEvent);
+                var events = GameLogics.start(gameState);
+                for (var event : events) {
+                    addEvent(event.target(), event.event());
                 }
             }
         }
     }
 
-    /**
-     * Return word request with random length span.
-     * @return
-     */
-    private EventObject getRequestWordEvent() {
-        var wordEvent = new EventObject("request_word");
-        int offset = (int)(Math.random()*3);
-        int max = MIN_WORD_LENGTH + (int)(Math.random() * (MAX_WORD_LENGTH-offset - MIN_WORD_LENGTH));
-        wordEvent.put("minLength", String.valueOf(MIN_WORD_LENGTH+offset));
-        wordEvent.put("maxLength", String.valueOf(max));
-        return wordEvent;
-    }
 
     /**
      * Leave game and refresh player list for participants.
@@ -278,29 +255,25 @@ public class GameServlet extends BaseServlet {
         var gameId = ctx.req().getParameter("game");
         var password = ctx.req().getParameter("pass");
         if (gameId != null) {
-            if (password == null) {
-                password = "";
-            }
             try {
                 gameId = gameId.trim();
                 // get game from db
                 var gameEntity = datastore.get(KeyFactory.createKey(GAME_TYPE, gameId));
                 // if db pass exists and user pass is correct
-                var pw = (String)gameEntity.getProperty("password");
-                if (pw == null || password.equals(pw)) {
+                var password2 = (String)gameEntity.getProperty("password");
+                if (password2==null || (password2.equals(password))) {
                     // check if game is full
-                    var query = new Query(PLAYER_TYPE)
-                            .setFilter(new Query.FilterPredicate("gameId", Query.FilterOperator.EQUAL, gameId))
-                            .setKeysOnly();
-                    var currentPlayerCount = datastore.prepare(query).countEntities(FetchOptions.Builder.withDefaults());
-                    if (currentPlayerCount >= MAX_PLAYERS_PER_GAME) {
+                    var gameState = getGameState(gameId);
+                    if (gameState.getPlayerStates().size() >= MAX_PLAYERS_PER_GAME) {
                         addEvent(clientId, new EventObject("join_error", Map.of(
                                 "error", "Game is full."
                         )));
                         return;
                     }
                     // update player
-                    var playerEntity = datastore.get(KeyFactory.createKey(PLAYER_TYPE, clientId));
+                    gameState.addPlayer(clientId);
+                    putGameState(gameId,gameState);
+                    var playerEntity = getEntity(PLAYER_TYPE, clientId);
                     playerEntity.setProperty("gameId", gameId);
                     datastore.put(playerEntity);
                     // send join event
@@ -333,13 +306,11 @@ public class GameServlet extends BaseServlet {
         if (playerEntity != null) {
             var gameId = playerEntity.getProperty("gameId").toString();
             var gameState = getGameState(gameId); // get state
-            var playerStates = GameLogics.makeGuess(gameState, clientId, guess); // play
+            var events = GameLogics.makeGuess(gameState, clientId, guess); // play
             putGameState(gameId, gameState); // store state
             // send changed states
-            var event = new EventObject("play_state");
-            for (var state : playerStates) {
-                event.setPayload(state);
-                addEvent(state.getClientId(), event);
+            for (var event : events) {
+                addEvent(event.target(), event.event());
             }
         }
     }
@@ -354,14 +325,12 @@ public class GameServlet extends BaseServlet {
         var word = ctx.req().getParameter("word");
         var playerEntity = getEntity(PLAYER_TYPE, clientId);
         if (playerEntity != null) {
-            var gameId = playerEntity.getProperty("gameId").toString();
+            var gameId = (String)playerEntity.getProperty("gameId");
             var gameState = getGameState(gameId); // get state
-            var playerStates = GameLogics.setWord(gameState, clientId, word);
+            var events = GameLogics.setWord(gameState, clientId, word);
             putGameState(gameId, gameState); // store state
-            var event = new EventObject("request_guess");
-            for (var state : playerStates) {
-                event.setPayload(state);
-                addEvent(state.getClientId(), event);
+            for (var event : events) {
+                addEvent(event.target(), event.event());
             }
         }
     }

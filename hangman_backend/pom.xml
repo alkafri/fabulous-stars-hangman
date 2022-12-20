@@ -29,6 +29,7 @@
     </properties>
 
     <dependencies>
+
         <dependency>
             <groupId>com.google.appengine</groupId>
             <artifactId>appengine-api-1.0-sdk</artifactId>

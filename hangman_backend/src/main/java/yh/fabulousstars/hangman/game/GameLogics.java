@@ -6,7 +6,8 @@ import java.util.List;
 import java.util.Map;
 
 public final class GameLogics {
-
+    private static final int MIN_WORD_LENGTH = 4;
+    private static final int MAX_WORD_LENGTH = 20;
     private static final int MAX_DAMAGE = 11;
 
     /**
@@ -33,12 +34,36 @@ public final class GameLogics {
     }
 
     /**
+     * send start and request word to all
+     * @param gameState
+     * @return
+     */
+    public static List<EventEnvelope> start(GameState gameState) {
+        var startedEvent = new EventObject("game_started");
+        var wordEvent = new EventObject("request_word");
+        wordEvent.put("minLength", String.valueOf(MIN_WORD_LENGTH));
+        wordEvent.put("maxLength", String.valueOf(MAX_WORD_LENGTH));
+        gameState.setStarted(true);
+        // players
+        var players = gameState.getPlayerEntries();
+        // send events to participants
+        var events = new ArrayList<EventEnvelope>();
+        for (var player : players) {
+            // start
+            events.add(new EventEnvelope(player.getKey(),startedEvent));
+            // word
+            events.add(new EventEnvelope(player.getKey(),wordEvent));
+        }
+        return events;
+    }
+
+    /**
      * @param gameState Game state to operate on
      * @param clientId  Calling client
      * @param guess     Guessed letter
      * @return changed states
      */
-    public static List<PlayState> makeGuess(GameState gameState, String clientId, String guess) {
+    public static List<EventEnvelope> makeGuess(GameState gameState, String clientId, String guess) {
 
         var sendStates = new ArrayList<PlayState>();
         var letter = guess.toUpperCase().charAt(0);
@@ -108,7 +133,7 @@ public final class GameLogics {
 
         // Check if the player has won
         if (counter == letters.length) {
-            player.setPlayerState(PlayState.WON);
+            player.setPlayerState(PlayState.FINISHED);
 
             // todo: player guessed word
             // Continue until all players have guessed or died
@@ -119,6 +144,8 @@ public final class GameLogics {
             }
         }
 
+        // TODO: return events here
+        // if all finished or dead and at least 2 are alive, go to next round
         return sendStates;
     }
 
@@ -131,13 +158,32 @@ public final class GameLogics {
      * @param word      Word to set
      * @return changed states or null.
      */
-    public static List<PlayState> setWord(GameState gameState, String clientId, String word) {
-        gameState.setPlayerWord(clientId, word);
-        var players = gameState.getPlayerStates();
-        if (gameState.hasWords()) {
-            chooseWords(gameState.getWordBucket(), players);
-            return players;
+    public static List<EventEnvelope> setWord(GameState gameState, String clientId, String word) {
+
+        // check length and re request if needed
+        var length = word.length();
+        if(length < MIN_WORD_LENGTH || length > MAX_WORD_LENGTH) {
+            var evt = new EventObject("request_word");
+            evt.put("minLength", String.valueOf(MIN_WORD_LENGTH));
+            evt.put("maxLength", String.valueOf(MAX_WORD_LENGTH));
+            return List.of(
+                    new EventEnvelope(clientId, evt)
+            );
         }
-        return null;
+        // set player word
+        gameState.setPlayerWord(clientId, word);
+        // if all words set, choose words for players
+        if (gameState.hasWords()) {
+            var players = gameState.getPlayerStates();
+            chooseWords(gameState.getWordBucket(), players);
+            var events = new ArrayList<EventEnvelope>();
+            for (var player: players) {
+                events.add(
+                    new EventEnvelope(player.getClientId(), new EventObject("request_guess"))
+                );
+            }
+            return events;
+        }
+        return List.of();
     }
 }

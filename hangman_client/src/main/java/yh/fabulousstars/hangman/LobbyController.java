@@ -206,7 +206,8 @@ public class LobbyController implements Initializable {
             var evt = (JoinOrCreate) event;
             if (evt.getError() != null) {
                 DialogHelper.showMessage(evt.getError(), Alert.AlertType.ERROR);
-                setUIState(true, UISection.Join, UISection.Create, UISection.Chat);
+                setUIState(true, UISection.Create, UISection.Chat);
+                setUIState(!gameList.isEmpty(), UISection.Join);
             } else {
                 setUIState(false, UISection.Connect, UISection.Join, UISection.Create, UISection.Chat);
                 gameWindow = new GameStage(evt.getGame());
@@ -220,7 +221,8 @@ public class LobbyController implements Initializable {
 
             gameWindow.close();
             gameWindow = null;
-            setUIState(true, UISection.Join, UISection.Create, UISection.Chat);
+            setUIState(true, UISection.Create, UISection.Chat);
+            setUIState(!gameList.isEmpty(), UISection.Join);
 
         } else if (event instanceof GameStarted) {
 
@@ -243,6 +245,8 @@ public class LobbyController implements Initializable {
             var evt = (GameList) event;
             gameList.clear();
             gameList.addAll(evt.getGameList());
+            var canJoin = !gameList.isEmpty() && gameManager.getClient().getGame()==null;
+            setUIState(canJoin, UISection.Join);
 
         } else if (event instanceof PlayerList) {
 
@@ -264,7 +268,10 @@ public class LobbyController implements Initializable {
                 setUIState(true, UISection.Connect);
             } else {
                 setUIState(false, UISection.Connect);
-                setUIState(true, UISection.Join, UISection.Create, UISection.Chat);
+                setUIState(true, UISection.Create, UISection.Chat);
+                if(!gameList.isEmpty()) {
+                    setUIState(true, UISection.Join);
+                }
             }
 
         } else if (event instanceof ChatMessage) {
