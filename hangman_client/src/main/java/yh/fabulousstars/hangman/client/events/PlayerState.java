@@ -1,22 +1,17 @@
 package yh.fabulousstars.hangman.client.events;
 
-import yh.fabulousstars.hangman.client.PlayState;
+import yh.fabulousstars.hangman.client.IPlayer;
+
+import java.util.List;
 
 public class PlayerState extends AbstractEvent {
-    private String clientId;
-    private PlayState state;
+    private List<IPlayer> states;
 
-    public PlayerState(String clientId, PlayState state) {
-
-        this.clientId = clientId;
-        this.state = state;
+    public PlayerState(List<IPlayer> states) {
+        this.states = states;
     }
 
-    public PlayState getState() {
-        return state;
-    }
-
-    public String getClientId() {
-        return clientId;
+    public List<IPlayer> getStates() {
+        return states;
     }
 }

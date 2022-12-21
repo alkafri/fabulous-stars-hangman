@@ -1,7 +1,8 @@
 package yh.fabulousstars.hangman.server;
 
 import com.google.appengine.api.datastore.*;
-import yh.fabulousstars.hangman.game.EventObject;
+import yh.fabulousstars.hangman.game.GameEvent;
+import yh.fabulousstars.hangman.game.GameEventType;
 import yh.fabulousstars.hangman.game.GameState;
 import yh.fabulousstars.hangman.server.utils.EntityUtils;
 import yh.fabulousstars.hangman.utils.ObjectHelper;
@@ -11,7 +12,9 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 public abstract class BaseServlet extends HttpServlet {
     public static final String PLAYER_TYPE = "Player";
@@ -23,7 +26,9 @@ public abstract class BaseServlet extends HttpServlet {
 
     protected BaseServlet() {
         super();
-        this.datastore = DatastoreServiceFactory.getDatastoreService();
+        this.datastore = DatastoreServiceFactory.getDatastoreService(
+                DatastoreServiceConfig.Builder.withDefaults()
+        );
     }
 
     /**
@@ -88,23 +93,10 @@ public abstract class BaseServlet extends HttpServlet {
      * @param gameId
      */
     protected void putGameState(String gameId, GameState gameState) {
-        var key = KeyFactory.createKey(GAME_STATE_TYPE, gameId);
-        var entity = new Entity(key);
+        var entity = new Entity(GAME_STATE_TYPE, gameId);
         setExpiry(entity);
         EntityUtils.putBlobObject(entity, gameState);
         datastore.put(entity);
-    }
-
-    /**
-     * Convert Entity properties to map of strings.
-     *
-     * @param entity
-     * @return
-     */
-    protected Map<String, String> getStringProperties(Entity entity) {
-        Map<String, String> map = new HashMap<>();
-        entity.getProperties().forEach((k, v) -> map.put(k, v == null ? null : v.toString()));
-        return map;
     }
 
     /**
@@ -128,13 +120,13 @@ public abstract class BaseServlet extends HttpServlet {
      * @param clientId target client.
      * @param event    Event object
      */
-    protected void addEvent(String clientId, EventObject event) {
+    protected void addEvent(String clientId, GameEvent event) {
         var entity = new Entity(EVENT_TYPE);
-        entity.setProperty("eTargetId", clientId); // client
-        entity.setProperty("eCreated", System.currentTimeMillis());
+        entity.setProperty("target", clientId); // client
+        entity.setProperty("created", System.currentTimeMillis());
         setExpiry(entity);
         EntityUtils.putBlobObject(entity, event);
-        System.out.println("ADD EVENT: " + event.getName());
+        System.out.println("ADD_EVENT: " + event.getType().toString() + " -> " + clientId);
         datastore.put(entity);
     }
 
@@ -154,9 +146,9 @@ public abstract class BaseServlet extends HttpServlet {
         var entityIter = datastore.prepare(
                 new Query(EVENT_TYPE)
                         .setFilter(new Query.FilterPredicate(
-                                "eTargetId", Query.FilterOperator.EQUAL, ctx.session())
+                                "target", Query.FilterOperator.EQUAL, ctx.session())
                         )
-                        .addSort("eCreated")
+                        .addSort("expires", Query.SortDirection.ASCENDING)
         ).asIterator();
         if (entityIter.hasNext()) {
             var entity = entityIter.next();
@@ -166,7 +158,7 @@ public abstract class BaseServlet extends HttpServlet {
             return;
         }
         // empty
-        var idle = ObjectHelper.toBytes(new EventObject("idle"));
+        var idle = ObjectHelper.toBytes(new GameEvent(GameEventType.Idle));
         output.write(idle);
     }
 

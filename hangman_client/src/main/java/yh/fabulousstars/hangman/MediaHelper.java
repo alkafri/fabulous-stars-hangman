@@ -35,7 +35,7 @@ public class MediaHelper {
     );
 
     private static MediaHelper singleton = null;
-    private final Map<String,Image> imageMap;
+    private final Map<String, Image> imageMap;
     private final Map<String, AudioClip> soundMap;
     private final Map<String, Media> mediaMap;
 
@@ -63,19 +63,23 @@ public class MediaHelper {
             mediaMap.put(name, new Media(uri.toString()));
         }
     }
-    public AudioClip getSound(String name) {
-        return soundMap.get(name);
-    }
-    public Image getImage(String name) {
-        return imageMap.get(name);
-    }
-    public MediaPlayer getMedia(String name) {
-        return new MediaPlayer(mediaMap.get(name));
-    }
+
     public static MediaHelper getInstance() {
-        if(singleton == null) {
+        if (singleton == null) {
             singleton = new MediaHelper();
         }
         return singleton;
+    }
+
+    public AudioClip getSound(String name) {
+        return soundMap.get(name);
+    }
+
+    public Image getImage(String name) {
+        return imageMap.get(name);
+    }
+
+    public MediaPlayer getMedia(String name) {
+        return new MediaPlayer(mediaMap.get(name));
     }
 }

@@ -1,4 +1,4 @@
-package yh.fabulousstars.hangman.gui;
+package yh.fabulousstars.hangman;
 
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -8,29 +8,29 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
-import yh.fabulousstars.hangman.MediaHelper;
 import yh.fabulousstars.hangman.client.IGame;
 import yh.fabulousstars.hangman.client.IPlayer;
 import yh.fabulousstars.hangman.client.events.*;
 
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.ResourceBundle;
 
 public class GameController implements Initializable {
     private static final int IMAGE_STATES = 11;
     private static final double CANVAS_WIDTH = 480;
     private static final double CANVAS_HEIGHT = 360;
-    private IGame game;
-    private boolean isRunning;
     private final ObservableList<String> chatList;
     private final ObservableList<String> playerList;
     private final Map<String, CanvasWrapper> canvasMap;
@@ -50,6 +50,8 @@ public class GameController implements Initializable {
     public Button startButton;
     @FXML
     public VBox rootView;
+    private IGame game;
+    private boolean isRunning;
 
     public GameController() {
         this.canvasMap = new HashMap<>();
@@ -77,10 +79,10 @@ public class GameController implements Initializable {
 
     private void onGuessEntered(ActionEvent actionEvent) {
         var guess = guessTextField.getText().trim();
-        guessTextField.clear();
         if (guess.length() == 1) {
+            guessTextField.clear();
             // send to server
-            game.getManager().getClient().submitGuess(guess);
+            game.getManager().submitGuess(guess);
         } else {
             media.getSound("error").play();
         }
@@ -94,8 +96,8 @@ public class GameController implements Initializable {
     private void onChatEntered(ActionEvent actionEvent) {
         var message = chatTextField.getText().trim();
         chatTextField.clear();
-        if(!message.isEmpty()) {
-            game.getManager().getClient().say(message);
+        if (!message.isEmpty()) {
+            game.getManager().say(message);
         }
     }
 
@@ -103,15 +105,13 @@ public class GameController implements Initializable {
         this.game = game;
         Platform.runLater(() -> {
             // initial player (this client)
-            var initialPlayers = Arrays.asList(game.getManager().getClient());
-            updatePlayers(initialPlayers);
+            updatePlayers(game);
         });
 
     }
 
     public void handlePlayerState(PlayerState event) {
-        var wrapper = canvasMap.get(event.getState().getClientId());
-        canvasBackground(wrapper);
+        drawCanvases();
     }
 
     public void handleGameStarted(GameStarted event) {
@@ -120,20 +120,21 @@ public class GameController implements Initializable {
         drawCanvases();
     }
 
-    public void handleSubmitGuess(SubmitGuess event) {
-        if(event.isCorrect()) {
-            media.getSound("button").play();
+    public void handleGuessResult(GuessResult event) {
+        if (event.isCorrect()) {
+            media.getSound("success").play();
+            if(event.isFinished()) {
+                guessTextField.setDisable(true);
+            }
         } else {
             media.getSound("error").play();
         }
     }
 
-    public void handlePlayerList(PlayerList event) {
+    public void handlePlayerList(IGame game) {
 
-        System.out.println(event);
-
-        var players = event.getPlayerList();
-        updatePlayers(event.getPlayerList());
+        var players = game.getPlayers();
+        updatePlayers(game);
         startButton.setDisable(players.size() < 2);
     }
 
@@ -145,14 +146,16 @@ public class GameController implements Initializable {
     /**
      * Rebuild canvas grid.
      *
-     * @param players
+     * @param game
      */
-    private void updatePlayers(List<IPlayer> players) {
+    private void updatePlayers(IGame game) {
+        var players = game.getPlayers();
         var clientIds = new ArrayList<String>();
         for (var player : players) {
             clientIds.add(player.getClientId());
             if (!canvasMap.containsKey(player.getClientId())) {
                 var canvas = new Canvas();
+                canvas.setManaged(false);
                 var wrapper = new CanvasWrapper(canvas, player);
                 canvasMap.put(player.getClientId(), wrapper);
             }
@@ -169,17 +172,23 @@ public class GameController implements Initializable {
         int row = 0;
         int col = -1;
         canvasContainer.getChildren().clear();
-        for (var wrapper : canvasMap.values()) {
-            if(++col > 2) {
+        var wrappers = canvasMap.values();
+        for (var wrapper : wrappers) {
+            if (++col > 2) {
                 col = 0;
                 row++;
             }
             canvasContainer.getChildren().add(wrapper.canvas);
             wrapper.canvas.setLayoutY(CANVAS_HEIGHT * row);
             wrapper.canvas.setLayoutX(CANVAS_WIDTH * col);
-            wrapper.canvas.resize(CANVAS_WIDTH, CANVAS_HEIGHT);
+            wrapper.canvas.setWidth(CANVAS_WIDTH);
+            wrapper.canvas.setHeight(CANVAS_HEIGHT);
         }
-        canvasContainer.resize(CANVAS_WIDTH * col, CANVAS_HEIGHT * row);
+        var wCount = wrappers.size();
+        var containerWidth = CANVAS_WIDTH * (wCount > 3 ? 3 : wCount);
+        var containerHeight = CANVAS_HEIGHT * (wCount > 3 ? 2 : 1);
+        canvasContainer.setMinSize(containerWidth, containerHeight);
+        canvasContainer.setPrefSize(containerWidth, containerHeight);
         var scene = rootView.getScene();
         rootView.layout();
         scene.getWindow().sizeToScene();
@@ -202,24 +211,22 @@ public class GameController implements Initializable {
         // if self
         var local = game.getManager().getClient().getClientId();
         var wrapped = wrapper.player.getClientId();
-        if(local == wrapped) {
+        if (local.equals(wrapped)) {
             gc.setFill(Color.LIGHTSKYBLUE);
         } else {
-            gc.setFill(Color.LIGHTCORAL);
+            gc.setFill(Color.MISTYROSE);
         }
 
         gc.fillRect(0, 0, wrapper.canvas.getWidth(), wrapper.canvas.getHeight());
 
-        if(wrapper.player.getPlayState() != null) {
-            //Prints the black bar
-            blackBarForLetter(wrapper);
-            //Draws the hangman
-            hangmanFigure(wrapper);
-            //draws the wrongly guessed letters
-            addWrongLetter(wrapper);
-            //draws the correctly guessed word
-            addCorrectLetter(wrapper);
-        }
+        //Prints the black bar
+        blackBarForLetter(wrapper);
+        //Draws the hangman
+        hangmanFigure(wrapper);
+        //draws the wrongly guessed letters
+        addWrongLetter(wrapper);
+        //draws the correctly guessed word
+        addCorrectLetter(wrapper);
     }
 
     /**
@@ -228,18 +235,21 @@ public class GameController implements Initializable {
      * @param wrapper
      */
     public void blackBarForLetter(CanvasWrapper wrapper) {
-        int maxBarSize = 60;
-        int barWidth = (int) (wrapper.canvas.getWidth() * 0.01);
-        int barHeight = (int) (wrapper.canvas.getHeight() * 0.02);
-        int barSize = barWidth * barHeight;
-        if (barSize > maxBarSize) {
-            barSize = maxBarSize;
-        }
-        GraphicsContext gc = wrapper.canvas.getGraphicsContext2D();
-        //Prints the image same amount of times as a word has letters
-        var letterCount = wrapper.player.getPlayState().getCurrentWord().length();
-        for (int i = 0; letterCount > i; i++) {
-            gc.drawImage(media.getImage("BlackBarTR"), barSize * i * 1.5, wrapper.canvas.getHeight() * 0.8, barSize, wrapper.canvas.getHeight() * 0.01);
+        var state = wrapper.player.getPlayState();
+        if (state != null && state.getCurrentWord() != null) {
+            int maxBarSize = 60;
+            int barWidth = (int) (wrapper.canvas.getWidth() * 0.01);
+            int barHeight = (int) (wrapper.canvas.getHeight() * 0.02);
+            int barSize = barWidth * barHeight;
+            if (barSize > maxBarSize) {
+                barSize = maxBarSize;
+            }
+            GraphicsContext gc = wrapper.canvas.getGraphicsContext2D();
+            //Prints the image same amount of times as a word has letters
+            var letterCount = wrapper.player.getPlayState().getCurrentWord().length;
+            for (int i = 0; letterCount > i; i++) {
+                gc.drawImage(media.getImage("BlackBarTR"), barSize * i * 1.5, wrapper.canvas.getHeight() * 0.8, barSize, wrapper.canvas.getHeight() * 0.01);
+            }
         }
     }
 
@@ -250,90 +260,96 @@ public class GameController implements Initializable {
      */
     public void hangmanFigure(CanvasWrapper wrapper) {
 
-        GraphicsContext gc = wrapper.canvas.getGraphicsContext2D();
         var state = wrapper.player.getPlayState();
-        var damage = state == null ? 1 : state.getTotalDamage()+1;
+        GraphicsContext gc = wrapper.canvas.getGraphicsContext2D();
+        var damage = state == null ? 1 : state.getDamage() + 1;
         if (damage > IMAGE_STATES) {
             damage = IMAGE_STATES;
         }
-        gc.drawImage(media.getImage("HangmanTranState"+damage),
+        gc.drawImage(media.getImage("HangmanTranState" + damage),
                 0, 10,
                 wrapper.canvas.getWidth() * 0.3, wrapper.canvas.getHeight() * 0.5);
     }
 
     public void addWrongLetter(CanvasWrapper wrapper) {
-        /*
-         * if the guess is wrong make the letter appear in red
-         * place them to the right of the hangman
-         * have a method to check if letter is correct
-         * if wrong print it on the canvas
-         */
-        int counter = -1;
-        int maxLetterSize = 100;
-        int letterSize = (int) (wrapper.canvas.getWidth() * 0.01 * wrapper.canvas.getHeight() * 0.02);
+        var state = wrapper.player.getPlayState();
+        if (state != null) {
+            /*
+             * if the guess is wrong make the letter appear in red
+             * place them to the right of the hangman
+             * have a method to check if letter is correct
+             * if wrong print it on the canvas
+             */
+            int counter = -1;
+            int maxLetterSize = 100;
+            int letterSize = (int) (wrapper.canvas.getWidth() * 0.01 * wrapper.canvas.getHeight() * 0.02);
 
-        if (letterSize > maxLetterSize) {
-            letterSize = maxLetterSize;
-        }
-
-        int rowOne = letterSize;
-        int rowTwo = letterSize * 2;
-
-        for (int i = 0; i < wrapper.wrongLetters.size() + 1; i++) {
-            int letterSpacing = counter * letterSize;
-
-            GraphicsContext gc = wrapper.canvas.getGraphicsContext2D();
-
-            gc.setFill(Color.RED);
-            gc.setFont(new Font("Arial", letterSize));
-
-            var letter = wrapper.wrongLetters.get(i).toString();
-            if (i < 6 && i > 0) {
-                gc.fillText(letter, 0 + letterSpacing + wrapper.canvas.getWidth() * 0.3, rowOne);
-            }
-            if (i < 11 && i > 5) {
-                gc.fillText(letter, 0 + letterSpacing + wrapper.canvas.getWidth() * 0.3, rowTwo);
+            if (letterSize > maxLetterSize) {
+                letterSize = maxLetterSize;
             }
 
-            counter++;
-            if (counter > 4) {
-                counter = 0;
+            int rowOne = letterSize;
+            int rowTwo = letterSize * 2;
+
+            var wrontLetters = state.getWrongGuesses();
+
+            for (int i = 0; i < wrontLetters.size(); i++) {
+                int letterSpacing = counter * letterSize;
+
+                GraphicsContext gc = wrapper.canvas.getGraphicsContext2D();
+
+                gc.setFill(Color.RED);
+                gc.setFont(new Font("Arial", letterSize));
+
+                var letter = wrontLetters.get(i).toString();
+                if (i < 6) {
+                    gc.fillText(letter, 0 + letterSpacing + wrapper.canvas.getWidth() * 0.3, rowOne);
+                } else {
+                    gc.fillText(letter, 0 + letterSpacing + wrapper.canvas.getWidth() * 0.3, rowTwo);
+                }
+
+                counter++;
+                if (counter > 4) {
+                    counter = 0;
+                }
             }
         }
     }
 
     public void addCorrectLetter(CanvasWrapper wrapper) {
 
-        int maxBarSize = 60;
-        int barWidth = (int) (wrapper.canvas.getWidth() * 0.01);
-        int barHeight = (int) (wrapper.canvas.getHeight() * 0.02);
-        int barSize = barWidth * barHeight;
+        var state = wrapper.player.getPlayState();
+        if (state != null && state.getCurrentWord() != null) {
+            int maxBarSize = 60;
+            int barWidth = (int) (wrapper.canvas.getWidth() * 0.01);
+            int barHeight = (int) (wrapper.canvas.getHeight() * 0.02);
+            int barSize = barWidth * barHeight;
 
-        if (barSize > maxBarSize) {
-            barSize = maxBarSize;
-        }
-        int maxLetterSize = 80;
-        int letterSize = (int) (wrapper.canvas.getWidth() * 0.01 * wrapper.canvas.getHeight() * 0.02);
+            if (barSize > maxBarSize) {
+                barSize = maxBarSize;
+            }
+            int maxLetterSize = 80;
+            int letterSize = (int) (wrapper.canvas.getWidth() * 0.01 * wrapper.canvas.getHeight() * 0.02);
 
-        if (letterSize > maxLetterSize) {
-            letterSize = maxLetterSize;
-        }
-        GraphicsContext gc = wrapper.canvas.getGraphicsContext2D();
-        gc.setFill(Color.GREEN);
-        gc.setFont(new Font("Arial", letterSize));
+            if (letterSize > maxLetterSize) {
+                letterSize = maxLetterSize;
+            }
+            GraphicsContext gc = wrapper.canvas.getGraphicsContext2D();
+            gc.setFill(Color.GREEN);
+            gc.setFont(new Font("Arial", letterSize));
 
-        //Prints the image same amount of times as a word has letters
-        var wordLength = wrapper.player.getPlayState().getCurrentWord().length();
-        for (int i = 0; wordLength > i; i++) {
+            //Prints the image same amount of times as a word has letters
+            var correctLetters = state.getCorrectGuesses();
+            for (int i = 0; i < correctLetters.length; i++) {
 
-            if (wrapper.correctLetters.size() <= wordLength) {
-                gc.fillText(wrapper.correctLetters.get(i).toString(),
+                gc.fillText(String.valueOf(correctLetters[i]),
                         barSize * i * 1.5,
                         wrapper.canvas.getHeight() * 0.8,
                         barSize);
             }
         }
     }
+
     /**
      * Request word from player.
      * Send it to server.
@@ -351,35 +367,45 @@ public class GameController implements Initializable {
             ));
             if (word != null) {
                 word = word.strip();
-                if (word.length() >= event.getMinLength()
-                        && word.length() <= event.getMaxLength()) {
-                    break;
+                if (!(word.length() >= event.getMinLength()
+                        && word.length() <= event.getMaxLength())) {
+                    word = null;
                 }
             }
         }
         // send to server
-        game.getManager().getClient().submitWord(word);
+        game.getManager().submitWord(word);
     }
 
     public void handleRequestGuess(RequestGuess event) {
         guessTextField.setDisable(false);
+        guessTextField.requestFocus();
     }
 
     public void dispose() {
         music.stop();
     }
 
+    public void handleGameOver(GameOver event) {
+        media.getSound("success").play();
+        this.guessTextField.setDisable(true);
+
+        //todo: draw winner / loser gfx
+
+        if (event.isWinner()) {
+            DialogHelper.showMessage("You won the game!", Alert.AlertType.CONFIRMATION);
+        } else {
+            DialogHelper.showMessage("You lost...", Alert.AlertType.CONFIRMATION);
+        }
+    }
+
     class CanvasWrapper {
         final Canvas canvas;
         final IPlayer player;
-        final ArrayList<Character> correctLetters;
-        final ArrayList<Character> wrongLetters;
 
         CanvasWrapper(Canvas canvas, IPlayer player) {
             this.canvas = canvas;
             this.player = player;
-            this.correctLetters = new ArrayList<>();
-            this.wrongLetters = new ArrayList<>();
         }
     }
 

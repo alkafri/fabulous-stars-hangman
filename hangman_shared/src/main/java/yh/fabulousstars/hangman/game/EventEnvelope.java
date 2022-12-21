@@ -1,3 +1,3 @@
 package yh.fabulousstars.hangman.game;
 
-public record EventEnvelope(String target, EventObject event) {}
+public record EventEnvelope(String target, GameEvent event) {}

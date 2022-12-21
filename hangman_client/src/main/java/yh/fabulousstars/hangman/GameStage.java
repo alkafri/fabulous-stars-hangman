@@ -1,31 +1,14 @@
-package yh.fabulousstars.hangman.gui;
+package yh.fabulousstars.hangman;
 
-import javafx.application.Platform;
-import javafx.beans.Observable;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
-import javafx.scene.canvas.Canvas;
-import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.control.*;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
-import javafx.scene.media.MediaPlayer;
 import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
-import yh.fabulousstars.hangman.GameApplication;
-import yh.fabulousstars.hangman.MediaHelper;
 import yh.fabulousstars.hangman.client.IGame;
-import yh.fabulousstars.hangman.client.IPlayer;
 import yh.fabulousstars.hangman.client.events.*;
 
 import java.io.IOException;
-import java.util.*;
-import java.util.stream.Collectors;
 
 public class GameStage extends Stage {
     private GameController controller;
@@ -70,16 +53,20 @@ public class GameStage extends Stage {
         controller.handleRequestGuess(event);
     }
 
-    public void handleSubmitGuess(SubmitGuess event) {
-        controller.handleSubmitGuess(event);
+    public void handleGuessResult(GuessResult event) {
+        controller.handleGuessResult(event);
     }
 
-    public void handlePlayerList(PlayerList event) {
-        controller.handlePlayerList(event);
+    public void handlePlayerList(IGame game) {
+        controller.handlePlayerList(game);
     }
 
     public void handleChatMessage(ChatMessage event) {
         controller.handleChatMessage(event);
+    }
+
+    public void handleGameOver(GameOver event) {
+        controller.handleGameOver(event);
     }
 }
 

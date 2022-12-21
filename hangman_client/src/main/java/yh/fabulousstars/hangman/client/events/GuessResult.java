@@ -1,11 +1,13 @@
 package yh.fabulousstars.hangman.client.events;
 
-public class SubmitGuess extends AbstractEvent {
+public class GuessResult extends AbstractEvent {
     private boolean correct;
+    private boolean finished;
     private String guess;
 
-    public SubmitGuess(boolean correct, String guess) {
+    public GuessResult(boolean correct, boolean finished, String guess) {
         this.correct = correct;
+        this.finished = finished;
         this.guess = guess;
     }
 
@@ -15,5 +17,8 @@ public class SubmitGuess extends AbstractEvent {
 
     public boolean isCorrect() {
         return correct;
+    }
+    public boolean isFinished() {
+        return finished;
     }
 }

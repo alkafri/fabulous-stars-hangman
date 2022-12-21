@@ -13,8 +13,6 @@ import yh.fabulousstars.hangman.client.IGameManager;
 import yh.fabulousstars.hangman.client.IPlayer;
 import yh.fabulousstars.hangman.client.events.*;
 import yh.fabulousstars.hangman.game.GameInfo;
-import yh.fabulousstars.hangman.gui.DialogHelper;
-import yh.fabulousstars.hangman.gui.GameStage;
 
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -46,6 +44,7 @@ public class LobbyController implements Initializable {
     @FXML
     public Button joinButton;
     private GameStage gameWindow;
+
     /**
      * Constructor
      */
@@ -191,15 +190,15 @@ public class LobbyController implements Initializable {
     private void onChatInput(ActionEvent actionEvent) {
         var message = chatInput.getText().trim();
         chatInput.clear();
-        if(!message.isEmpty()) {
-            gameManager.getClient().say(message);
+        if (!message.isEmpty()) {
+            gameManager.say(message);
         }
     }
 
     private void handleGameEvent(IGameEvent event) {
 
         var client = gameManager.getClient();
-        System.out.println("LOBBY("+(client!=null ? client.getClientId() : null)+"): " + event.getType());
+        System.out.println("LOBBY(" + (client != null ? client.getClientId() : null) + "): " + event.getType());
 
         if (event instanceof JoinOrCreate) {
 
@@ -236,16 +235,16 @@ public class LobbyController implements Initializable {
 
             gameWindow.handleRequestGuess((RequestGuess) event);
 
-        } else if (event instanceof SubmitGuess) {
+        } else if (event instanceof GuessResult) {
 
-            gameWindow.handleSubmitGuess((SubmitGuess) event);
+            gameWindow.handleGuessResult((GuessResult) event);
 
         } else if (event instanceof GameList) {
 
             var evt = (GameList) event;
             gameList.clear();
             gameList.addAll(evt.getGameList());
-            var canJoin = !gameList.isEmpty() && gameManager.getClient().getGame()==null;
+            var canJoin = !gameList.isEmpty() && gameManager.getClient().getGame() == null;
             setUIState(canJoin, UISection.Join);
 
         } else if (event instanceof PlayerList) {
@@ -253,7 +252,7 @@ public class LobbyController implements Initializable {
             var evt = (PlayerList) event;
 
             if (evt.isInGame()) {
-                gameWindow.handlePlayerList((PlayerList) event);
+                gameWindow.handlePlayerList(gameManager.getGame());
             } else {
                 playerList.clear();
                 playerList.addAll(evt.getPlayerList());
@@ -269,7 +268,7 @@ public class LobbyController implements Initializable {
             } else {
                 setUIState(false, UISection.Connect);
                 setUIState(true, UISection.Create, UISection.Chat);
-                if(!gameList.isEmpty()) {
+                if (!gameList.isEmpty()) {
                     setUIState(true, UISection.Join);
                 }
             }
@@ -291,6 +290,9 @@ public class LobbyController implements Initializable {
             chatList.clear();
             gameWindow.close();
             gameWindow = null;
+
+        } else if (event instanceof GameOver) {
+            gameWindow.handleGameOver((GameOver) event);
         }
     }
 

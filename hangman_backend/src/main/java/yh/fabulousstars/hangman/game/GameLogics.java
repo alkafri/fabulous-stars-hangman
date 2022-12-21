@@ -6,9 +6,6 @@ import java.util.List;
 import java.util.Map;
 
 public final class GameLogics {
-    private static final int MIN_WORD_LENGTH = 4;
-    private static final int MAX_WORD_LENGTH = 20;
-    private static final int MAX_DAMAGE = 11;
 
     /**
      * Get random word from bucket for each player not belonging to player.
@@ -35,14 +32,15 @@ public final class GameLogics {
 
     /**
      * send start and request word to all
+     *
      * @param gameState
      * @return
      */
     public static List<EventEnvelope> start(GameState gameState) {
-        var startedEvent = new EventObject("game_started");
-        var wordEvent = new EventObject("request_word");
-        wordEvent.put("minLength", String.valueOf(MIN_WORD_LENGTH));
-        wordEvent.put("maxLength", String.valueOf(MAX_WORD_LENGTH));
+        var startedEvent = new GameEvent(GameEventType.Game_started);
+        var requestWordEvent = new GameEvent(GameEventType.Request_word)
+                .put("minLength", String.valueOf(Config.MIN_WORD_LENGTH))
+                .put("maxLength", String.valueOf(Config.MAX_WORD_LENGTH));
         gameState.setStarted(true);
         // players
         var players = gameState.getPlayerEntries();
@@ -50,9 +48,9 @@ public final class GameLogics {
         var events = new ArrayList<EventEnvelope>();
         for (var player : players) {
             // start
-            events.add(new EventEnvelope(player.getKey(),startedEvent));
+            events.add(new EventEnvelope(player.getKey(), startedEvent));
             // word
-            events.add(new EventEnvelope(player.getKey(),wordEvent));
+            events.add(new EventEnvelope(player.getKey(), requestWordEvent));
         }
         return events;
     }
@@ -64,89 +62,97 @@ public final class GameLogics {
      * @return changed states
      */
     public static List<EventEnvelope> makeGuess(GameState gameState, String clientId, String guess) {
-
-        var sendStates = new ArrayList<PlayState>();
+        var events = new ArrayList<EventEnvelope>();
         var letter = guess.toUpperCase().charAt(0);
         var player = gameState.getPlayState(clientId);
         var opponent = gameState.getPlayState(player.getOpponentId());
-
         boolean foundMatch = false;
+        int stateChange = 0;
 
-        // process the user input here...
-        char[] letters = player.getCurrentWord().toCharArray();
-
-        /*
-        if (guessWord.length() > 1) {
-            if (guessWord.equals(userWord)) {
-
-                counter = wordCount;
-                for (int i = 0; i < letters.length; i++) {
-
-                    if (letters[i] == guessWord.charAt(i)) {
-                        // If a match is found, print the index and character
-                        System.out.println("Found a match at index " + i + ": " + letters[i]);
-                        correctLetter[i] = letters[i];
-
-                    }
-                }
-            }
-
-        } else {
-*/
+        // process the guess.
+        var word = player.getCurrentWord();
         var correct = player.getCorrectGuesses();
         var wrong = player.getWrongGuesses();
-        // Check if the user input is in the array of letters
-        for (int i = 0; i < letters.length; i++) {
-
-            if (letters[i] == letter) {
-                // If a match is found, print the index and character
-                // System.out.println("Found a match at index " + i + ": " + letters[i]);
-                //replace '*' with correct letter
-                correct.set(i, letter);
+        // Check if the user input is in the word.
+        for (int i = 0; i < correct.length; i++) {
+            if (word[i] == letter) {
+                // If a match is found, replace '*' with correct letter in array.
+                correct[i] = letter;
                 foundMatch = true;
-
-            }
-        }
-        // Check if the user has lost
-        if (!foundMatch) {
-            wrong.add(letter);
-            if (player.getTotalDamage() >= MAX_DAMAGE) {
-                player.setPlayerState(PlayState.DEAD);
-                sendStates.add(player);
+                stateChange++;
             }
         }
 
-        //}
-        int counter = 0;
-        if (foundMatch) {
-            for (int i = 0; i < letters.length; i++) {
-                if (!correct.get(i).equals('*')) {
+        if (foundMatch) { // damage opponent
+            opponent.addDamage();
+            stateChange++;
+            // finished?
+            int counter = 0;
+            for (int i = 0; i < correct.length; i++) {
+                if (correct[i] != '*') {
                     counter++;
                 }
             }
-            opponent.addDamage(); // damage opponent by guessing correct
-            if (opponent.getTotalDamage() >= MAX_DAMAGE) {
-                opponent.setPlayerState(PlayState.DEAD);
+            if (counter == word.length) {
+                player.setPlayerState(PlayState.FINISHED);
+                stateChange++;
             }
-            sendStates.add(opponent);
+        } else {
+            // Damage player
+            wrong.add(letter);
+            player.addDamage();
+            stateChange++;
         }
 
-        // Check if the player has won
-        if (counter == letters.length) {
-            player.setPlayerState(PlayState.FINISHED);
+        // correct/incorrect guess
+        events.add(new EventEnvelope(clientId, new GameEvent(GameEventType.Guess_result)
+                .put("correct", foundMatch ? "1" : "0")
+                .put("finished", player.getPlayState()==PlayState.FINISHED?"1":"0")));
 
-            // todo: player guessed word
-            // Continue until all players have guessed or died
-            // If more than one player left, draw new round for remaining.
+        if (stateChange != 0) {
+            addPlayerStates(gameState, events);
+        }
 
-            if (!sendStates.contains(player)) {
-                sendStates.add(player);
+        // get some numbers
+        int numAlive = 0;
+        int numPlaying = 0;
+        String winner = null;
+        for (var pState : gameState.getPlayerStates()) {
+            var state = pState.getPlayState();
+            if (state != PlayState.DEAD) {
+                numAlive++;
+                winner = pState.getClientId();
+                if (state == PlayState.PLAY) {
+                    numPlaying++;
+                }
             }
         }
 
-        // TODO: return events here
-        // if all finished or dead and at least 2 are alive, go to next round
-        return sendStates;
+        if (numAlive < 2) {
+            // todo: winner (alive) or 1st(dead but least damage), 2nd, .. etc
+            if (winner != null) {
+                events.add(new EventEnvelope(winner, new GameEvent(GameEventType.Winner)));
+            }
+            for (var pState : gameState.getPlayerStates()) {
+                if (!pState.getClientId().equals(winner)) {
+                    events.add(new EventEnvelope(pState.getClientId(), new GameEvent(GameEventType.Loser)));
+                }
+            }
+        } else if (numPlaying == 0) {
+            // new round
+            gameState.getWordBucket().clear();
+            var requestWordEvent = new GameEvent(GameEventType.Request_word)
+                    .put("minLength", String.valueOf(Config.MIN_WORD_LENGTH))
+                    .put("maxLength", String.valueOf(Config.MAX_WORD_LENGTH));
+            for (var pState : gameState.getPlayerStates()) {
+                if (pState.getPlayState() != PlayState.DEAD) {
+                    pState.setPlayerState(PlayState.PLAY);
+                    events.add(new EventEnvelope(pState.getClientId(), requestWordEvent));
+                }
+            }
+        }
+
+        return events;
     }
 
     /**
@@ -159,31 +165,41 @@ public final class GameLogics {
      * @return changed states or null.
      */
     public static List<EventEnvelope> setWord(GameState gameState, String clientId, String word) {
-
+        var events = new ArrayList<EventEnvelope>();
         // check length and re request if needed
         var length = word.length();
-        if(length < MIN_WORD_LENGTH || length > MAX_WORD_LENGTH) {
-            var evt = new EventObject("request_word");
-            evt.put("minLength", String.valueOf(MIN_WORD_LENGTH));
-            evt.put("maxLength", String.valueOf(MAX_WORD_LENGTH));
+        if (length < Config.MIN_WORD_LENGTH || length > Config.MAX_WORD_LENGTH) {
+            var evt = new GameEvent(GameEventType.Request_word)
+                    .put("minLength", String.valueOf(Config.MIN_WORD_LENGTH))
+                    .put("maxLength", String.valueOf(Config.MAX_WORD_LENGTH));
             return List.of(
                     new EventEnvelope(clientId, evt)
             );
         }
         // set player word
         gameState.setPlayerWord(clientId, word);
+
         // if all words set, choose words for players
-        if (gameState.hasWords()) {
-            var players = gameState.getPlayerStates();
-            chooseWords(gameState.getWordBucket(), players);
-            var events = new ArrayList<EventEnvelope>();
-            for (var player: players) {
-                events.add(
-                    new EventEnvelope(player.getClientId(), new EventObject("request_guess"))
-                );
+        var living = gameState.getLivingPlayerStates();
+        var bucket = gameState.getWordBucket();
+        if (living.size() == bucket.size()) {
+            var players = gameState.getLivingPlayerStates();
+            chooseWords(bucket, living);
+            addPlayerStates(gameState, events);
+            for (var player : players) {
+                events.add(new EventEnvelope(player.getClientId(),
+                        new GameEvent(GameEventType.Request_guess)));
             }
-            return events;
         }
-        return List.of();
+        return events;
+    }
+
+    private static void addPlayerStates(GameState gameState, List<EventEnvelope> target) {
+        var players = gameState.getPlayerStates();
+        var event = new GameEvent(GameEventType.Play_state)
+                .setPayload(players);
+        for (var player : players) {
+            target.add(new EventEnvelope(player.getClientId(), event));
+        }
     }
 }

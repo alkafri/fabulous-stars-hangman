@@ -2,6 +2,7 @@ package yh.fabulousstars.hangman.game;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +38,15 @@ public class GameState implements Serializable {
     public List<PlayState> getPlayerStates() {
         return players.values().stream().toList();
     }
+    public List<PlayState> getLivingPlayerStates() {
+        var states = new ArrayList<PlayState>();
+        for(var player : players.values()) {
+            if(player.getPlayState() != PlayState.DEAD) {
+                states.add(player);
+            }
+        }
+        return states;
+    }
 
     public PlayState getPlayState(String clientId) {
         return players.get(clientId);
@@ -56,18 +66,5 @@ public class GameState implements Serializable {
 
     public void setStarted(boolean started) {
         this.started = started;
-    }
-
-    /**
-     * Bucket is filled with words.
-     *
-     * @return
-     */
-    public boolean hasWords() {
-        int count = 0;
-        for (var player : players.values()) {
-            if(player.getPlayState() != PlayState.DEAD) count++;
-        }
-        return count >= wordBucket.size();
     }
 }

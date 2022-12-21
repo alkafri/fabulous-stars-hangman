@@ -1,6 +1,15 @@
 package yh.fabulousstars.hangman.client;
 
+import yh.fabulousstars.hangman.game.PlayState;
+
 public interface IPlayer {
+
+    /**
+     * Get manager the game belongs to.
+     *
+     * @return IGameManager instance
+     */
+    IGameManager getManager();
 
     /**
      * Get client id for this player.
@@ -29,23 +38,4 @@ public interface IPlayer {
      * @return PlayetState
      */
     PlayState getPlayState();
-
-    /**
-     * Submit player word.
-     *
-     * @param value
-     */
-    void submitWord(String value);
-
-    /**
-     * Submit player guess.
-     *
-     * @param value
-     */
-    void submitGuess(String value);
-
-    /**
-     * Say something in chat.
-     */
-    void say(String message);
 }

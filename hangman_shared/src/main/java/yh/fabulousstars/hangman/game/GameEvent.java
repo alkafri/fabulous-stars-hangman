@@ -5,37 +5,53 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
-public class EventObject implements Serializable {
+/**
+ * Event objects are sent to clients.
+ */
+public class GameEvent implements Serializable {
     @Serial
     private static final long serialVersionUID = 1020304050L;
+    /**
+     * Various properties.
+     */
     private final HashMap<String, String> properties;
-    private String name;
+    /**
+     * Event name.
+     */
+    private GameEventType type;
+    /**
+     * Serializable payload.
+     */
     private Object payload;
 
-    public EventObject(String name) {
-        this.name = name;
+    /**
+     * Construct event object.
+     * @param type Event type.
+     */
+    public GameEvent(GameEventType type) {
+        this.type = type;
         this.properties = new HashMap<>();
         this.payload = null;
     }
 
-    public EventObject(String name, Map<String, String> source) {
-        this.name = name;
+    public GameEvent(GameEventType type, Map<String, String> source) {
+        this.type = type;
         this.properties = new HashMap<>(source);
         this.payload = null;
     }
 
-    public String getName() {
-        return name;
+    public GameEventType getType() {
+        return type;
     }
 
     public Object getPayload() {
         return payload;
     }
 
-    public void setPayload(Object payload) {
+    public GameEvent setPayload(Object payload) {
         this.payload = payload;
+        return this;
     }
-
     public String get(String key) {
         return properties.get(key);
     }
@@ -44,7 +60,8 @@ public class EventObject implements Serializable {
         return properties.containsKey(key);
     }
 
-    public void put(String key, String value) {
+    public GameEvent put(String key, String value) {
         properties.put(key, value);
+        return this;
     }
 }

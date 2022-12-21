@@ -1,4 +1,4 @@
-package yh.fabulousstars.hangman.gui;
+package yh.fabulousstars.hangman;
 
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;

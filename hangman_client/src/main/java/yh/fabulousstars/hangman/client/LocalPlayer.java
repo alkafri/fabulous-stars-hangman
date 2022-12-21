@@ -1,11 +1,12 @@
 package yh.fabulousstars.hangman.client;
 
+import yh.fabulousstars.hangman.game.PlayState;
+
 class LocalPlayer implements IPlayer {
     private final String clientId;
     private final String name;
-
-    private LocalGame game;
     private final GameManager manager;
+    private LocalGame game;
     private PlayState playState;
 
     LocalPlayer(GameManager manager, LocalGame game, String name, String clientId) {
@@ -13,6 +14,11 @@ class LocalPlayer implements IPlayer {
         this.clientId = clientId;
         this.game = game;
         this.name = name;
+    }
+
+    @Override
+    public IGameManager getManager() {
+        return manager;
     }
 
     @Override
@@ -26,7 +32,7 @@ class LocalPlayer implements IPlayer {
     }
 
     void setGame(LocalGame game) {
-        game = game;
+        this.game = game;
     }
 
     @Override
@@ -41,24 +47,5 @@ class LocalPlayer implements IPlayer {
 
     public void setPlayState(PlayState playState) {
         this.playState = playState;
-    }
-
-    @Override
-    public void submitWord(String value) {
-        if (game != null) {
-            manager.submitWord(value);
-        }
-    }
-
-    @Override
-    public void submitGuess(String value) {
-        if (game != null) {
-            manager.submitGuess(value);
-        }
-    }
-
-    @Override
-    public void say(String message) {
-        manager.say(message);
     }
 }

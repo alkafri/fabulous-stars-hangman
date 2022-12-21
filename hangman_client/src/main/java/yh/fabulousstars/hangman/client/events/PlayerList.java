@@ -24,7 +24,7 @@ public class PlayerList extends AbstractEvent {
     @Override
     public String toString() {
         var sb = new StringBuilder().append("{");
-        for(var player : playerList) {
+        for (var player : playerList) {
             sb.append(" <").append(player.getClientId()).append("> ");
         }
         return sb.append("}").toString();

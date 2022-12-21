@@ -8,16 +8,16 @@ import java.util.ArrayList;
  * Player play state.
  */
 public class PlayState implements Serializable {
-    public static final int WAIT = 0;
+    public static final int PLAY = 0;
     public static final int DEAD = 1;
     public static final int FINISHED = 2;
     @Serial
     private static final long serialVersionUID = 1020304052L;
-    private String clientId;
+    private final String clientId;
     private String opponentId;
-    private String currentWord;
-    private ArrayList<Character> wrongGuesses;
-    private ArrayList<Character> correctGuesses;
+    private char[] currentWord;
+    private final ArrayList<Character> wrongGuesses;
+    private char[] correctGuesses;
     private int state;
     private int damage;
 
@@ -26,8 +26,8 @@ public class PlayState implements Serializable {
         this.opponentId = null;
         this.currentWord = null;
         this.wrongGuesses = new ArrayList<>();
-        this.correctGuesses = new ArrayList<>();
-        this.state = WAIT;
+        this.correctGuesses = null;
+        this.state = PLAY;
         this.damage = 0;
     }
 
@@ -38,28 +38,27 @@ public class PlayState implements Serializable {
      */
     void setCurrentWord(String opponentId, String currentWord) {
         this.opponentId = opponentId;
-        this.currentWord = currentWord;
-        damage = getTotalDamage(); // accumulate damage from previous round
+        this.currentWord = currentWord.toUpperCase().toCharArray();
         wrongGuesses.clear();
+        correctGuesses = new char[currentWord.length()];
         for (int i = 0; i < currentWord.length(); i++) {
-            correctGuesses.add('*');
+            correctGuesses[i] = '*';
         }
-        correctGuesses.clear();
     }
 
     public String getClientId() {
         return clientId;
     }
 
-    String getCurrentWord() {
+    public char[] getCurrentWord() {
         return currentWord;
     }
 
-    ArrayList<Character> getWrongGuesses() {
+    public ArrayList<Character> getWrongGuesses() {
         return wrongGuesses;
     }
 
-    ArrayList<Character> getCorrectGuesses() {
+    public char[] getCorrectGuesses() {
         return correctGuesses;
     }
 
@@ -71,8 +70,8 @@ public class PlayState implements Serializable {
         return state;
     }
 
-    int getTotalDamage() {
-        return wrongGuesses.size() + damage;
+    public int getDamage() {
+        return damage;
     }
 
     public void setPlayerState(int state) {
@@ -80,6 +79,8 @@ public class PlayState implements Serializable {
     }
 
     public void addDamage() {
-        this.damage++;
+        if (++damage >= Config.MAX_DAMAGE) {
+            state = PlayState.DEAD;
+        }
     }
 }

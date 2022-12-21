@@ -19,10 +19,6 @@ class LocalGame implements IGame {
 
     }
 
-    GameManager getClient() {
-        return manager;
-    }
-
     @Override
     public List<IPlayer> getPlayers() {
         return players.values().stream().collect(Collectors.toList());
@@ -56,5 +52,9 @@ class LocalGame implements IGame {
     @Override
     public void start() {
         manager.start();
+    }
+
+    public void addPlayer(LocalPlayer player) {
+        players.put(player.getClientId(), player);
     }
 }

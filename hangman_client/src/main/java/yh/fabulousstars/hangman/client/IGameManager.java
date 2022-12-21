@@ -3,6 +3,25 @@ package yh.fabulousstars.hangman.client;
 public interface IGameManager {
 
     /**
+     * Submit player word.
+     *
+     * @param value
+     */
+    void submitWord(String value);
+
+    /**
+     * Submit player guess.
+     *
+     * @param value
+     */
+    void submitGuess(String value);
+
+    /**
+     * Say something in chat.
+     */
+    void say(String message);
+
+    /**
      * Request list of games.
      * Generates a GameList event from server.
      */
