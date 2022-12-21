@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 class GameManager implements IGameManager {
-    private static final long POLL_MS = 1000;
+    private static final long POLL_MS = 1500;
     private final String backendUrl;
     private final HttpClient http;
     private final Thread thread;

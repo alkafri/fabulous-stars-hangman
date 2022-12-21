@@ -1,0 +1,11 @@
+<!-- Indices written at Wed, 21 Dec 2022 15:51:04 CET -->
+
+<datastore-indexes autoGenerate="true">
+
+    <!-- Used 21 times in query history -->
+    <datastore-index kind="Event" ancestor="false" source="auto">
+        <property name="target" direction="asc"/>
+        <property name="expires" direction="asc"/>
+    </datastore-index>
+
+</datastore-indexes>

@@ -218,8 +218,10 @@ public class LobbyController implements Initializable {
 
         } else if (event instanceof LeaveGame) {
 
-            gameWindow.close();
-            gameWindow = null;
+            if(gameWindow!=null) {
+                gameWindow.close();
+                gameWindow = null;
+            }
             setUIState(true, UISection.Create, UISection.Chat);
             setUIState(!gameList.isEmpty(), UISection.Join);
 
@@ -288,9 +290,10 @@ public class LobbyController implements Initializable {
             setUIState(false, UISection.Join, UISection.Create);
             gameManager.disconnect();
             chatList.clear();
-            gameWindow.close();
-            gameWindow = null;
-
+            if(gameWindow!=null) {
+                gameWindow.close();
+                gameWindow = null;
+            }
         } else if (event instanceof GameOver) {
             gameWindow.handleGameOver((GameOver) event);
         }
