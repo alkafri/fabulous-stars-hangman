@@ -68,6 +68,10 @@ public class GameServlet extends BaseServlet {
             // get state object
             var gameState = getGameState(gameId);
             if (gameState != null) {
+                var game = getEntity(GAME_TYPE,gameId);
+                game.setProperty("started","1"); // do not list started games
+                putEntity(game);
+                listGames(ctx, true);
                 // set started
                 var events = GameLogics.start(gameState);
                 for (var event : events) {
@@ -102,7 +106,7 @@ public class GameServlet extends BaseServlet {
         var gameId = (String) player.getProperty("gameId");
         // clear game id from player
         player.setProperty("gameId", null);
-        datastore.put(player);
+        putEntity(player);
         var state = getGameState(gameId);
         state.removePlayer(clientId);
         putGameState(gameId, state);
@@ -131,7 +135,7 @@ public class GameServlet extends BaseServlet {
         var query = new Query(PLAYER_TYPE)
                 .setKeysOnly()
                 .setFilter(new Query.FilterPredicate("gameId", Query.FilterOperator.EQUAL, gameId));
-        var entities = datastore.prepare(query).asList(FetchOptions.Builder.withDefaults());
+        var entities = prepare(query).asList(FetchOptions.Builder.withDefaults());
         var players = new ArrayList<PlayerInfo>();
         for (var entity : entities) {
             players.add(new PlayerInfo(
@@ -175,8 +179,7 @@ public class GameServlet extends BaseServlet {
                 entity.setProperty("name", name);
                 entity.setProperty("gameId", null);
                 // store in db
-                setExpiry(entity);
-                datastore.put(entity);
+                putEntity(entity);
                 // send connect and list players/games event
                 addEvent(clientId, event);
                 listPlayers(ctx, true);
@@ -226,14 +229,14 @@ public class GameServlet extends BaseServlet {
                 entity.setProperty("name", name);
                 entity.setProperty("password", pass);
                 entity.setProperty("owner", clientId);
-                datastore.put(entity); // game id from db
+                putEntity(entity); // game id from db
                 // create game state
                 var state = new GameState();
                 state.addPlayer(ctx.session());
                 putGameState(clientId, state);
                 // update player
                 player.setProperty("gameId", clientId);
-                datastore.put(player);
+                putEntity(player);
                 // created event
                 var event = new GameEvent(GameEventType.Created)
                         .put("gameId", clientId)
@@ -282,7 +285,7 @@ public class GameServlet extends BaseServlet {
                     putGameState(gameId, gameState);
                     var playerEntity = getEntity(PLAYER_TYPE, clientId);
                     playerEntity.setProperty("gameId", gameId);
-                    datastore.put(playerEntity);
+                    putEntity(playerEntity);
                     // send join event
                     var event = new GameEvent(GameEventType.Join)
                             .put("name", (String) gameEntity.getProperty("name"))
@@ -353,15 +356,17 @@ public class GameServlet extends BaseServlet {
         // results
         var games = new ArrayList<GameInfo>();
         // iterate games
-        var iter = datastore.prepare(new Query(GAME_TYPE)).asIterator();
+        var iter = prepare(new Query(GAME_TYPE)).asIterator();
         while (iter.hasNext()) {
             var entity = iter.next(); // get game entity
-            var pass = (String) entity.getProperty("password");
-            games.add(new GameInfo(
-                    entity.getKey().getName(),
-                    (String) entity.getProperty("name"),
-                    pass != null
-            ));
+            if(!entity.hasProperty("started")) {
+                var pass = (String) entity.getProperty("password");
+                games.add(new GameInfo(
+                        entity.getKey().getName(),
+                        (String) entity.getProperty("name"),
+                        pass != null
+                ));
+            }
         }
         // list event
         var event = new GameEvent(GameEventType.Game_list)
@@ -416,7 +421,7 @@ public class GameServlet extends BaseServlet {
                         "gameId",
                         Query.FilterOperator.EQUAL,
                         currentGameId));
-        return datastore.prepare(query).asList(FetchOptions.Builder.withDefaults());
+        return prepare(query).asList(FetchOptions.Builder.withDefaults());
     }
 
     /**
@@ -437,7 +442,7 @@ public class GameServlet extends BaseServlet {
                                 "name",
                                 Query.FilterOperator.EQUAL,
                                 name));
-                if (datastore.prepare(query).asSingleEntity() == null) {
+                if (prepare(query).asSingleEntity() == null) {
                     return name;
                 }
             }
@@ -452,14 +457,14 @@ public class GameServlet extends BaseServlet {
      */
     private void deleteClient(String clientId) {
         // remove player
-        datastore.delete(KeyFactory.createKey("Player", clientId));
+        delete(KeyFactory.createKey("Player", clientId));
         // remove remaining game events
         var query = new Query("GameEvent")
                 .setKeysOnly()
                 .setFilter(new Query.FilterPredicate(
                         "clientId", Query.FilterOperator.EQUAL, clientId));
-        var keys = datastore.prepare(query)
+        var keys = prepare(query)
                 .asList(FetchOptions.Builder.withDefaults()).stream().map(ent -> ent.getKey());
-        datastore.delete(keys.toList());
+        delete(keys.toList());
     }
 }

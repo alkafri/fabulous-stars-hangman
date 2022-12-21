@@ -16,12 +16,12 @@ public class GameState implements Serializable {
     private static final long serialVersionUID = 1020304051L;
     private final HashMap<String, String> wordBucket;
     private final HashMap<String, PlayState> players;
-    private boolean started;
+    private boolean ended;
 
     public GameState() {
         this.wordBucket = new HashMap<>();
         this.players = new HashMap<>();
-        this.started = false;
+        this.ended = false;
     }
 
     void setPlayerWord(String clientId, String word) {
@@ -60,11 +60,11 @@ public class GameState implements Serializable {
         players.remove(clientId);
     }
 
-    public boolean getStarted() {
-        return started;
+    public boolean getEnded() {
+        return ended;
     }
 
-    public void setStarted(boolean started) {
-        this.started = started;
+    public void setEnded() {
+        ended = true;
     }
 }

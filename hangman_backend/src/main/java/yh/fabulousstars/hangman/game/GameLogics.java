@@ -41,7 +41,6 @@ public final class GameLogics {
         var requestWordEvent = new GameEvent(GameEventType.Request_word)
                 .put("minLength", String.valueOf(Config.MIN_WORD_LENGTH))
                 .put("maxLength", String.valueOf(Config.MAX_WORD_LENGTH));
-        gameState.setStarted(true);
         // players
         var players = gameState.getPlayerEntries();
         // send events to participants
@@ -138,6 +137,8 @@ public final class GameLogics {
                     events.add(new EventEnvelope(pState.getClientId(), new GameEvent(GameEventType.Loser)));
                 }
             }
+            gameState.setEnded();
+
         } else if (numPlaying == 0) {
             // new round
             gameState.getWordBucket().clear();

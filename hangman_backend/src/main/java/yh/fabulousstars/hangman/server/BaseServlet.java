@@ -21,8 +21,8 @@ public abstract class BaseServlet extends HttpServlet {
     public static final String GAME_TYPE = "Game";
     protected static final String GAME_STATE_TYPE = "GameState";
     protected static final String EVENT_TYPE = "Event";
-    private static final long ENTITY_EXPIRY_MS = 30 * 60 * 1000; // min * sec * millis
-    protected final DatastoreService datastore; // google datastore service api
+    private static final long ENTITY_EXPIRY_MS = 600 * 1000; // 10
+    private final DatastoreService datastore; // google datastore service api
 
     protected BaseServlet() {
         super();
@@ -52,10 +52,6 @@ public abstract class BaseServlet extends HttpServlet {
         }
     }
 
-    protected void setExpiry(Entity entity) {
-        entity.setProperty("expires", new Date(System.currentTimeMillis() + ENTITY_EXPIRY_MS));
-    }
-
     /**
      * Get entity from database.
      *
@@ -71,6 +67,42 @@ public abstract class BaseServlet extends HttpServlet {
         } catch (Exception ex) {
         }
         return null;
+    }
+
+    /**
+     * Put entity.
+     * Add expires property.
+     * @param entity
+     * @return
+     */
+    protected Key putEntity(Entity entity) {
+        entity.setProperty("expires", new Date(System.currentTimeMillis() + ENTITY_EXPIRY_MS));
+        return datastore.put(entity);
+    }
+
+    /**
+     * Prepare datastore query.
+     * @param query
+     * @return
+     */
+    protected PreparedQuery prepare(Query query) {
+        return datastore.prepare(query);
+    }
+
+    /**
+     * Delete entity.
+     * @param key
+     */
+    protected void delete(Key key) {
+        datastore.delete(key);
+    }
+
+    /**
+     * Delete entities.
+     * @param keys
+     */
+    protected void delete(List<Key> keys) {
+        datastore.delete(keys);
     }
 
     /**
@@ -94,9 +126,8 @@ public abstract class BaseServlet extends HttpServlet {
      */
     protected void putGameState(String gameId, GameState gameState) {
         var entity = new Entity(GAME_STATE_TYPE, gameId);
-        setExpiry(entity);
         EntityUtils.putBlobObject(entity, gameState);
-        datastore.put(entity);
+        putEntity(entity);
     }
 
     /**
@@ -123,11 +154,8 @@ public abstract class BaseServlet extends HttpServlet {
     protected void addEvent(String clientId, GameEvent event) {
         var entity = new Entity(EVENT_TYPE);
         entity.setProperty("target", clientId); // client
-        entity.setProperty("created", System.currentTimeMillis());
-        setExpiry(entity);
         EntityUtils.putBlobObject(entity, event);
-        System.out.println("ADD_EVENT: " + event.getType().toString() + " -> " + clientId);
-        datastore.put(entity);
+        putEntity(entity);
     }
 
     /**
@@ -163,7 +191,7 @@ public abstract class BaseServlet extends HttpServlet {
     }
 
     /**
-     * Handle requests from get and put in sub-class.
+     * Handle requests from get and put in subclass.
      *
      * @param ctx
      * @throws IOException

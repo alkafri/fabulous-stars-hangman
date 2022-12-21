@@ -26,7 +26,7 @@
         while (games.hasNext()) {
             Entity game = games.next();
     %>
-    <li><%= game.getProperty("name").toString() %>
+    <li><%= game.getProperty("name").toString() %> <%= game.hasProperty("started") ? "(active)":""%>
     </li>
     <% } %>
 </ul>
