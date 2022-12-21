@@ -75,6 +75,10 @@ public class LobbyController implements Initializable {
         }
     }
 
+    /**
+     * Candle connect button
+     * @param actionEvent
+     */
     public void onConnectButton(ActionEvent actionEvent) {
         var playerName = playerNameField.getText().strip();
         if (!playerName.isEmpty()) {
@@ -107,6 +111,11 @@ public class LobbyController implements Initializable {
         }
     }
 
+    /**
+     * Handle clicking the join button.
+     *
+     * @param event
+     */
     @FXML
     public void onJoinButtonClick(ActionEvent event) {
         var gameRef = gameListView.getSelectionModel().getSelectedItem();
@@ -187,6 +196,11 @@ public class LobbyController implements Initializable {
         });
     }
 
+    /**
+     * Handle chat.
+     *
+     * @param actionEvent
+     */
     private void onChatInput(ActionEvent actionEvent) {
         var message = chatInput.getText().trim();
         chatInput.clear();
@@ -195,10 +209,12 @@ public class LobbyController implements Initializable {
         }
     }
 
+    /**
+     * Handles the different IGameEvent fired by IGameManager.
+     *
+     * @param event
+     */
     private void handleGameEvent(IGameEvent event) {
-
-        var client = gameManager.getClient();
-        System.out.println("LOBBY(" + (client != null ? client.getClientId() : null) + "): " + event.getType());
 
         if (event instanceof JoinOrCreate) {
 
