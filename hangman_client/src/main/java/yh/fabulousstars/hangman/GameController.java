@@ -388,9 +388,16 @@ public class GameController implements Initializable {
 
     public void handleGameOver(GameOver event) {
         media.getSound("success").play();
+        music.stop();
         this.guessTextField.setDisable(true);
+        this.chatTextField.setDisable(true);
 
-        //todo: draw winner / loser gfx
+        // draw winner / loser gfx
+        for(String client : canvasMap.keySet()) {
+            if(client) {
+// todo fix
+            }
+        }
 
         if (event.isWinner()) {
             DialogHelper.showMessage("You won the game!", Alert.AlertType.CONFIRMATION);
