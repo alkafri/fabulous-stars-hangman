@@ -189,6 +189,7 @@ public class GameController implements Initializable {
         canvasContainer.setMinSize(containerWidth, containerHeight);
         canvasContainer.setPrefSize(containerWidth, containerHeight);
         var scene = rootView.getScene();
+        canvasContainer.getParent().layout();
         rootView.layout();
         scene.getWindow().sizeToScene();
         drawCanvases();
