@@ -1,6 +1,8 @@
-# Hangman backend
+# Hangman Backend
 
-This server backend is written in java17 and runs on Google Cloud. It uses the following services:
+> By Fabulous Stars
+
+The Hangman backend is written in Java17 and runs on Google Cloud. It uses the following services:
 
 * Cloud Datastore
 * App Engine Standard
