@@ -6,6 +6,7 @@
 <?import javafx.scene.text.Font?>
 <VBox xmlns:fx="http://javafx.com/fxml/1" fx:id="rootView" maxHeight="1.7976931348623157E308"
       maxWidth="1.7976931348623157E308" xmlns="http://javafx.com/javafx/18"
+
       fx:controller="yh.fabulousstars.hangman.GameController">
     <children>
         <Pane fx:id="canvasContainer" maxHeight="720.0" maxWidth="1440.0" minHeight="360.0" minWidth="480.0"

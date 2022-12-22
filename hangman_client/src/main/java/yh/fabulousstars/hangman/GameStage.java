@@ -15,7 +15,7 @@ public class GameStage extends Stage {
 
     public GameStage(IGame game) {
         FXMLLoader fxmlLoader = new FXMLLoader(GameApplication.class.getResource("/game-view.fxml"));
-        Scene scene = null;
+        Scene scene;
         try {
             scene = new Scene(fxmlLoader.load(), Color.GRAY);
         } catch (IOException e) {
@@ -67,6 +67,10 @@ public class GameStage extends Stage {
 
     public void handleGameOver(GameOver event) {
         controller.handleGameOver(event);
+    }
+
+    public void handleLeft() {
+        controller.dispose();
     }
 }
 

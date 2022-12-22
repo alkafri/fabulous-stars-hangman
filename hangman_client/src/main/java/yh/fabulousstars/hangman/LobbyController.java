@@ -235,7 +235,7 @@ public class LobbyController implements Initializable {
         } else if (event instanceof LeaveGame) {
 
             if(gameWindow!=null) {
-                gameWindow.close();
+                gameWindow.handleLeft();
                 gameWindow = null;
             }
             setUIState(true, UISection.Create, UISection.Chat);
