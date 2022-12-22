@@ -1,6 +1,11 @@
 # Hangman backend
 
-Uses Google Cloud Datastore and App Engine Standard Java17 Bundled Services
+This server backend is written in java17 and runs on Google Cloud. It uses the following services:
+
+* Cloud Datastore
+* App Engine Standard
+
+For documentation see:
 
 * [java-datastore](https://cloud.google.com/appengine/docs/java/datastore/)
 * [ae-docs](https://cloud.google.com/appengine/docs/standard/java-gen2/services/access)
@@ -9,20 +14,33 @@ Uses Google Cloud Datastore and App Engine Standard Java17 Bundled Services
 
 This example uses the
 [Cloud SDK Maven plugin](https://cloud.google.com/appengine/docs/java/tools/using-maven).
-To run this sample locally:
+To run this server locally:
 
 ```
 mvn package appengine:run
 ```
 
-To see the results of the sample application, open
+To see the results of the server application, open
 [localhost:8080](http://localhost:8080) in a web browser.
 
 ## Deploying
 
+### Datastore Configuration
+
+Add a TTL handler for the following entities:
+
+* Event
+* Game
+* Player
+* GameState
+
+The TTL property to use is **expires**.
+
+
+### Maven
+
 ```
-mvn clean package appengine:deploy -Dapp.deploy.gcloudMode=beta
+mvn clean package appengine:deploy
 mvn appengine:deployIndex
 
 ```
-
