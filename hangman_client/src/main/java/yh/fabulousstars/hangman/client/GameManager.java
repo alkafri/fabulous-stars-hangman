@@ -384,8 +384,7 @@ class GameManager implements IGameManager {
         var gameId = serverEvent.get("gameId");
         List<IPlayer> players = new ArrayList<>();
         if (currentGame != null && !currentGame.getId().equals(gameId)) {
-            // getting player list when not in game should never happen
-            throw new RuntimeException("Incorrect game id!");
+            return null;
         }
         for (var playerInf : infList) {
             IPlayer player = currentGame == null ? null : currentGame.getPlayer(playerInf.getClientId());
